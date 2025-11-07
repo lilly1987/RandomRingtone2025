@@ -57,17 +57,30 @@ class MainActivity : AppCompatActivity() {
     private val ringtoneFolders = mutableListOf<Uri>()
     private val alarmFolders = mutableListOf<Uri>()
     private val notificationFolders = mutableListOf<Uri>()
-    private val displayList = mutableListOf<String>()
-    private val originalDisplayList = mutableListOf<String>()
+    
+    // 각 탭별 별도 뷰 목록
+    private val ringtoneDisplayList = mutableListOf<String>()
+    private val alarmDisplayList = mutableListOf<String>()
+    private val notificationDisplayList = mutableListOf<String>()
+    private val ringtoneOriginalDisplayList = mutableListOf<String>()
+    private val alarmOriginalDisplayList = mutableListOf<String>()
+    private val notificationOriginalDisplayList = mutableListOf<String>()
+    
+    // 각 탭별 검색 쿼리와 필터 모드
+    private var ringtoneSearchQuery = ""
+    private var alarmSearchQuery = ""
+    private var notificationSearchQuery = ""
+    private var ringtoneFilterMode = FilterMode.ALL
+    private var alarmFilterMode = FilterMode.ALL
+    private var notificationFilterMode = FilterMode.ALL
+    
     private enum class FilterMode { ALL, CHECKED, UNCHECKED }
-    private var currentFilterMode = FilterMode.ALL
     private lateinit var folderAdapter: FolderAdapter
     private lateinit var folderListView: ListView
     private lateinit var emptyMessageView: TextView
     private lateinit var loadingMessageView: TextView
     private lateinit var searchEditText: android.widget.EditText
     private lateinit var preferences: SharedPreferences
-    private var searchQuery = ""
     private val categoryLoaded = mutableSetOf<FolderCategory>()
     private var currentCategory = FolderCategory.RINGTONE
     private val deleteSelectedPositions = mutableSetOf<Int>()
@@ -318,19 +331,12 @@ class MainActivity : AppCompatActivity() {
         
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                currentCategory = when (tab.position) {
+                val category = when (tab.position) {
                     0 -> FolderCategory.RINGTONE
                     1 -> FolderCategory.ALARM
                     else -> FolderCategory.NOTIFICATION
                 }
-                // 이미 로드된 카테고리는 즉시 표시
-                if (categoryLoaded.contains(currentCategory)) {
-                    updateDisplayList()
-                } else {
-                    // 데이터는 이미 로드되어 있으므로 즉시 표시 (로딩 표시 없음)
-                    categoryLoaded.add(currentCategory)
-                    updateDisplayList()
-                }
+                switchToCategory(category)
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) = Unit
@@ -544,18 +550,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateEmptyState() {
-        emptyMessageView.visibility = if (displayList.isEmpty()) View.VISIBLE else View.GONE
+        val currentDisplayList = getCurrentDisplayList()
+        emptyMessageView.visibility = if (currentDisplayList.isEmpty()) View.VISIBLE else View.GONE
         val deleteFab = findViewById<FloatingActionButton>(R.id.deleteSelectedButton)
         val addFab = findViewById<FloatingActionButton>(R.id.addFolderButton)
         val cancelFab = findViewById<FloatingActionButton>(R.id.cancelSelectionButton)
 
         // visibility만 제어, 위치는 레이아웃에서 관리
         if (selectionMode) {
-            deleteFab.visibility = if (displayList.isEmpty()) View.GONE else View.VISIBLE
+            deleteFab.visibility = if (currentDisplayList.isEmpty()) View.GONE else View.VISIBLE
             addFab.visibility = View.GONE
-            cancelFab.visibility = if (displayList.isEmpty()) View.GONE else View.VISIBLE
+            cancelFab.visibility = if (currentDisplayList.isEmpty()) View.GONE else View.VISIBLE
         } else {
-            deleteFab.visibility = if (displayList.isEmpty()) View.GONE else View.VISIBLE
+            deleteFab.visibility = if (currentDisplayList.isEmpty()) View.GONE else View.VISIBLE
             addFab.visibility = View.VISIBLE
             cancelFab.visibility = View.GONE
         }
@@ -566,13 +573,56 @@ class MainActivity : AppCompatActivity() {
         FolderCategory.ALARM -> alarmFolders
         FolderCategory.NOTIFICATION -> notificationFolders
     }
+    
+    private fun getCurrentDisplayList(): MutableList<String> = when (currentCategory) {
+        FolderCategory.RINGTONE -> ringtoneDisplayList
+        FolderCategory.ALARM -> alarmDisplayList
+        FolderCategory.NOTIFICATION -> notificationDisplayList
+    }
+    
+    private fun getCurrentOriginalDisplayList(): MutableList<String> = when (currentCategory) {
+        FolderCategory.RINGTONE -> ringtoneOriginalDisplayList
+        FolderCategory.ALARM -> alarmOriginalDisplayList
+        FolderCategory.NOTIFICATION -> notificationOriginalDisplayList
+    }
+    
+    private fun getCurrentSearchQuery(): String = when (currentCategory) {
+        FolderCategory.RINGTONE -> ringtoneSearchQuery
+        FolderCategory.ALARM -> alarmSearchQuery
+        FolderCategory.NOTIFICATION -> notificationSearchQuery
+    }
+    
+    private fun setCurrentSearchQuery(query: String) {
+        when (currentCategory) {
+            FolderCategory.RINGTONE -> ringtoneSearchQuery = query
+            FolderCategory.ALARM -> alarmSearchQuery = query
+            FolderCategory.NOTIFICATION -> notificationSearchQuery = query
+        }
+    }
+    
+    private fun getCurrentFilterMode(): FilterMode = when (currentCategory) {
+        FolderCategory.RINGTONE -> ringtoneFilterMode
+        FolderCategory.ALARM -> alarmFilterMode
+        FolderCategory.NOTIFICATION -> notificationFilterMode
+    }
+    
+    private fun setCurrentFilterMode(mode: FilterMode) {
+        when (currentCategory) {
+            FolderCategory.RINGTONE -> ringtoneFilterMode = mode
+            FolderCategory.ALARM -> alarmFilterMode = mode
+            FolderCategory.NOTIFICATION -> notificationFilterMode = mode
+        }
+    }
 
     private fun updateDisplayList() {
         val currentList = getCurrentFolderList()
+        val currentOriginalList = getCurrentOriginalDisplayList()
+        val currentDisplayList = getCurrentDisplayList()
+        
         // validateAndRemoveInvalidUris는 백그라운드에서 점진적으로 수행
         // validateAndRemoveInvalidUris(currentList)
-        originalDisplayList.clear()
-        currentList.forEach { originalDisplayList.add(getDisplayName(it)) }
+        currentOriginalList.clear()
+        currentList.forEach { currentOriginalList.add(getDisplayName(it)) }
         applySearchFilter()
         deleteSelectedPositions.clear()
         selectionMode = false
@@ -592,6 +642,36 @@ class MainActivity : AppCompatActivity() {
             refreshHandler.postDelayed({
                 refreshCountsForCurrentCategory()
             }, 300) // 300ms 지연
+        }
+    }
+    
+    private fun switchToCategory(category: FolderCategory) {
+        // 현재 탭의 검색 쿼리와 필터 모드 저장
+        setCurrentSearchQuery(searchEditText.text.toString().lowercase())
+        
+        // 탭 전환
+        val previousCategory = currentCategory
+        currentCategory = category
+        
+        // 새 탭의 검색 쿼리와 필터 모드 복원
+        searchEditText.setText(getCurrentSearchQuery())
+        val filterRadioGroup = findViewById<android.widget.RadioGroup>(R.id.filterRadioGroup)
+        when (getCurrentFilterMode()) {
+            FilterMode.ALL -> filterRadioGroup.check(R.id.filterAll)
+            FilterMode.CHECKED -> filterRadioGroup.check(R.id.filterChecked)
+            FilterMode.UNCHECKED -> filterRadioGroup.check(R.id.filterUnchecked)
+        }
+        
+        // 이미 로드된 카테고리는 재로딩하지 않고 캐시된 뷰 표시
+        if (categoryLoaded.contains(category)) {
+            // 검색 필터만 다시 적용
+            applySearchFilter()
+            folderAdapter.notifyDataSetChanged()
+            updateEmptyState()
+        } else {
+            // 처음 로드하는 경우에만 updateDisplayList 호출
+            categoryLoaded.add(category)
+            updateDisplayList()
         }
     }
     
@@ -653,7 +733,8 @@ class MainActivity : AppCompatActivity() {
         searchEditText.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                searchQuery = s?.toString()?.lowercase() ?: ""
+                val query = s?.toString()?.lowercase() ?: ""
+                setCurrentSearchQuery(query)
                 applySearchFilter()
             }
             override fun afterTextChanged(s: android.text.Editable?) {}
@@ -661,21 +742,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applySearchFilter() {
-        displayList.clear()
+        val currentDisplayList = getCurrentDisplayList()
+        val currentOriginalList = getCurrentOriginalDisplayList()
         val currentList = getCurrentFolderList()
         val selectedSet = getCurrentPersistentSelected()
+        val searchQuery = getCurrentSearchQuery()
+        val filterMode = getCurrentFilterMode()
+        
+        currentDisplayList.clear()
         
         // 필터 모드에 따라 필터링
-        val filteredList = when (currentFilterMode) {
-            FilterMode.ALL -> originalDisplayList
+        val filteredList = when (filterMode) {
+            FilterMode.ALL -> currentOriginalList
             FilterMode.CHECKED -> {
-                originalDisplayList.filter { name ->
+                currentOriginalList.filter { name ->
                     val uri = currentList.find { getDisplayName(it) == name }
                     uri != null && selectedSet.contains(uri)
                 }
             }
             FilterMode.UNCHECKED -> {
-                originalDisplayList.filter { name ->
+                currentOriginalList.filter { name ->
                     val uri = currentList.find { getDisplayName(it) == name }
                     uri == null || !selectedSet.contains(uri)
                 }
@@ -684,11 +770,11 @@ class MainActivity : AppCompatActivity() {
         
         // 검색 쿼리 적용
         if (searchQuery.isEmpty()) {
-            displayList.addAll(filteredList)
+            currentDisplayList.addAll(filteredList)
         } else {
             filteredList.forEach { name ->
                 if (name.lowercase().contains(searchQuery)) {
-                    displayList.add(name)
+                    currentDisplayList.add(name)
                 }
             }
         }
@@ -703,12 +789,13 @@ class MainActivity : AppCompatActivity() {
         val filterUnchecked = findViewById<android.widget.RadioButton>(R.id.filterUnchecked)
         
         filterRadioGroup.setOnCheckedChangeListener { _, checkedId ->
-            currentFilterMode = when (checkedId) {
+            val mode = when (checkedId) {
                 R.id.filterAll -> FilterMode.ALL
                 R.id.filterChecked -> FilterMode.CHECKED
                 R.id.filterUnchecked -> FilterMode.UNCHECKED
                 else -> FilterMode.ALL
             }
+            setCurrentFilterMode(mode)
             applySearchFilter()
         }
     }
@@ -738,8 +825,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getUriForDisplayPosition(position: Int): Uri? {
-        if (position !in displayList.indices) return null
-        val displayName = displayList[position]
+        val currentDisplayList = getCurrentDisplayList()
+        if (position !in currentDisplayList.indices) return null
+        val displayName = currentDisplayList[position]
         val currentList = getCurrentFolderList()
         return currentList.find { getDisplayName(it) == displayName }
     }
@@ -842,7 +930,8 @@ class MainActivity : AppCompatActivity() {
     private fun showDeleteDialog(position: Int) {
         val uri = getUriForDisplayPosition(position) ?: return
         val currentList = getCurrentFolderList()
-        val folderName = displayList.getOrNull(position) ?: getString(R.string.delete_confirmation_default)
+        val currentDisplayList = getCurrentDisplayList()
+        val folderName = currentDisplayList.getOrNull(position) ?: getString(R.string.delete_confirmation_default)
 
         AlertDialog.Builder(this)
             .setTitle(R.string.delete_folder_title)
@@ -876,7 +965,15 @@ class MainActivity : AppCompatActivity() {
         RINGTONE, ALARM, NOTIFICATION
     }
 
-    private inner class FolderAdapter : ArrayAdapter<String>(this@MainActivity, 0, displayList) {
+    private inner class FolderAdapter : ArrayAdapter<String>(this@MainActivity, 0, getCurrentDisplayList()) {
+        override fun getCount(): Int {
+            return getCurrentDisplayList().size
+        }
+        
+        override fun getItem(position: Int): String? {
+            val list = getCurrentDisplayList()
+            return if (position in list.indices) list[position] else null
+        }
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_folder, parent, false)
             val titleView = view.findViewById<TextView>(R.id.text1)
@@ -885,7 +982,9 @@ class MainActivity : AppCompatActivity() {
             val container = view.findViewById<android.widget.LinearLayout>(R.id.itemRoot)
             val progress = view.findViewById<View>(R.id.progressFill)
 
-            titleView.text = displayList[position]
+            val currentDisplayList = getCurrentDisplayList()
+            if (position !in currentDisplayList.indices) return view
+            titleView.text = currentDisplayList[position]
 
             checkBox.setOnCheckedChangeListener(null)
             val rowUriForCheck = getUriForDisplayPosition(position)
@@ -1150,7 +1249,8 @@ class MainActivity : AppCompatActivity() {
         if (currentlyPlayingUri == null || !autoScrollOnTrackChange) return
         
         val displayName = getDisplayName(currentlyPlayingUri!!)
-        val position = displayList.indexOf(displayName)
+        val currentDisplayList = getCurrentDisplayList()
+        val position = currentDisplayList.indexOf(displayName)
         if (position >= 0) {
             // 항목이 화면 가운데로 오도록 스크롤
             val firstVisible = folderListView.firstVisiblePosition
