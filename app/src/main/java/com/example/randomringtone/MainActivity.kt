@@ -348,35 +348,54 @@ class MainActivity : AppCompatActivity() {
 
         tabLayout.getTabAt(0)?.select()
 
-        // 초기 로딩은 비동기로 처리
+        // 초기 로딩은 비동기로 처리 (각 탭별로 분할, UI는 점진적으로 갱신)
         loadingMessageView.text = getString(R.string.loading)
         loadingMessageView.visibility = View.VISIBLE
-        folderListView.visibility = View.GONE
+        folderListView.visibility = View.VISIBLE // 즉시 표시하여 점진적으로 갱신
         emptyMessageView.visibility = View.GONE
         
         Thread {
-            // 빠른 로딩: 캐시된 데이터 먼저 로드
-            val totalCount = ringtoneFolders.size + alarmFolders.size + notificationFolders.size
-            var loadedCount = 0
+            val totalTabs = 3
+            var loadedTabs = 0
             
+            // 벨소리 탭 로딩 (1/3)
             runOnUiThread {
-                loadingMessageView.text = getString(R.string.loading_progress, loadedCount, totalCount)
+                loadingMessageView.text = getString(R.string.loading_progress, 1, totalTabs) + " - " + getString(R.string.tab_ringtone)
             }
+            loadCategoryFoldersAsync(KEY_RINGTONE_FOLDERS, ringtoneFolders, FolderCategory.RINGTONE)
+            loadCachedCountsForCategory(FolderCategory.RINGTONE)
+            loadCachedDurationsForCategory(FolderCategory.RINGTONE)
+            restorePersistentSelectionsForCategory(FolderCategory.RINGTONE)
+            loadedTabs++
             
-            restoreFolders()
-            loadedCount = ringtoneFolders.size + alarmFolders.size + notificationFolders.size
+            // 알람 탭 로딩 (2/3)
             runOnUiThread {
-                loadingMessageView.text = getString(R.string.loading_progress, loadedCount, totalCount)
+                loadingMessageView.text = getString(R.string.loading_progress, 2, totalTabs) + " - " + getString(R.string.tab_alarm)
             }
+            loadCategoryFoldersAsync(KEY_ALARM_FOLDERS, alarmFolders, FolderCategory.ALARM)
+            loadCachedCountsForCategory(FolderCategory.ALARM)
+            loadCachedDurationsForCategory(FolderCategory.ALARM)
+            restorePersistentSelectionsForCategory(FolderCategory.ALARM)
+            loadedTabs++
             
-            restorePersistentSelections()
+            // 알림 탭 로딩 (3/3)
+            runOnUiThread {
+                loadingMessageView.text = getString(R.string.loading_progress, 3, totalTabs) + " - " + getString(R.string.tab_notification)
+            }
+            loadCategoryFoldersAsync(KEY_NOTIFICATION_FOLDERS, notificationFolders, FolderCategory.NOTIFICATION)
+            loadCachedCountsForCategory(FolderCategory.NOTIFICATION)
+            loadCachedDurationsForCategory(FolderCategory.NOTIFICATION)
+            restorePersistentSelectionsForCategory(FolderCategory.NOTIFICATION)
+            loadedTabs++
             
-            // UI를 먼저 표시 (캐시된 데이터로)
+            // 모든 탭 로딩 완료
             runOnUiThread {
                 categoryLoaded.add(currentCategory)
                 loadingMessageView.visibility = View.GONE
-                folderListView.visibility = View.VISIBLE
-                updateDisplayList()
+                // 현재 탭의 목록 업데이트
+                if (categoryLoaded.contains(currentCategory)) {
+                    updateDisplayList()
+                }
             }
             
             // 백그라운드에서 URI 검증 (점진적으로)
@@ -469,17 +488,72 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun restoreFolders() {
-        loadCategoryFolders(KEY_RINGTONE_FOLDERS, ringtoneFolders)
-        loadCategoryFolders(KEY_ALARM_FOLDERS, alarmFolders)
-        loadCategoryFolders(KEY_NOTIFICATION_FOLDERS, notificationFolders)
-        
-        // 캐시된 카운트와 duration 로드
-        loadCachedCounts()
-        loadCachedDurations()
-        
-        // URI 검증은 백그라운드에서 점진적으로 수행 (초기 로딩 속도 향상)
-        // validateAndRemoveInvalidUris는 백그라운드에서 실행
+    private fun loadCachedCountsForCategory(category: FolderCategory) {
+        val cachedString = preferences.getString(KEY_FOLDER_COUNTS_CACHE, null) ?: return
+        try {
+            val json = JSONObject(cachedString)
+            val targetList = when (category) {
+                FolderCategory.RINGTONE -> ringtoneFolders
+                FolderCategory.ALARM -> alarmFolders
+                FolderCategory.NOTIFICATION -> notificationFolders
+            }
+            targetList.forEach { uri ->
+                val key = uri.toString()
+                if (json.has(key)) {
+                    val count = json.optInt(key, 0)
+                    if (count > 0) {
+                        folderCounts[uri] = count
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // 캐시 로드 실패 시 무시
+        }
+    }
+    
+    private fun loadCachedDurationsForCategory(category: FolderCategory) {
+        val cachedString = preferences.getString(KEY_FILE_DURATIONS_CACHE, null) ?: return
+        try {
+            val json = JSONObject(cachedString)
+            val targetList = when (category) {
+                FolderCategory.RINGTONE -> ringtoneFolders
+                FolderCategory.ALARM -> alarmFolders
+                FolderCategory.NOTIFICATION -> notificationFolders
+            }
+            targetList.forEach { uri ->
+                val key = uri.toString()
+                if (json.has(key)) {
+                    val duration = json.optLong(key, 0)
+                    if (duration > 0) {
+                        fileDurationsMs[uri] = duration
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // 캐시 로드 실패 시 무시
+        }
+    }
+    
+    private fun restorePersistentSelectionsForCategory(category: FolderCategory) {
+        val key = when (category) {
+            FolderCategory.RINGTONE -> KEY_RINGTONE_SELECTED
+            FolderCategory.ALARM -> KEY_ALARM_SELECTED
+            FolderCategory.NOTIFICATION -> KEY_NOTIFICATION_SELECTED
+        }
+        val targetSet = when (category) {
+            FolderCategory.RINGTONE -> ringtoneSelected
+            FolderCategory.ALARM -> alarmSelected
+            FolderCategory.NOTIFICATION -> notificationSelected
+        }
+        preferences.getString(key, null)?.let {
+            try {
+                val arr = JSONArray(it)
+                for (i in 0 until arr.length()) {
+                    val s = arr.optString(i, null) ?: continue
+                    targetSet.add(Uri.parse(s))
+                }
+            } catch (_: Exception) { }
+        }
     }
     
     private fun loadCachedCounts() {
@@ -914,6 +988,37 @@ class MainActivity : AppCompatActivity() {
             for (i in 0 until jsonArray.length()) {
                 val uriString = jsonArray.optString(i, null) ?: continue
                 target.add(Uri.parse(uriString))
+            }
+        } catch (_: JSONException) {
+            target.clear()
+            preferences.edit().remove(key).apply()
+        }
+    }
+    
+    private fun loadCategoryFoldersAsync(key: String, target: MutableList<Uri>, category: FolderCategory) {
+        target.clear()
+        val savedString = preferences.getString(key, null) ?: return
+        try {
+            val jsonArray = JSONArray(savedString)
+            val totalCount = jsonArray.length()
+            
+            for (i in 0 until jsonArray.length()) {
+                val uriString = jsonArray.optString(i, null) ?: continue
+                val uri = Uri.parse(uriString)
+                target.add(uri)
+                
+                // 각 항목을 추가할 때마다 UI 갱신 (현재 탭인 경우에만)
+                if (category == currentCategory) {
+                    runOnUiThread {
+                        // originalDisplayList에 추가
+                        val currentOriginalList = getCurrentOriginalDisplayList()
+                        currentOriginalList.add(getDisplayName(uri))
+                        // 필터 적용하여 displayList 업데이트
+                        applySearchFilter()
+                        // 빈 상태 업데이트
+                        updateEmptyState()
+                    }
+                }
             }
         } catch (_: JSONException) {
             target.clear()
