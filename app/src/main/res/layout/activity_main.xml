@@ -47,6 +47,49 @@
                 android:text="@string/tab_notification" />
         </com.google.android.material.tabs.TabLayout>
 
+        <!-- 필터 옵션 -->
+        <RadioGroup
+            android:id="@+id/filterRadioGroup"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="8dp"
+            android:background="?attr/colorSurface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/categoryTabs">
+
+            <RadioButton
+                android:id="@+id/filterAll"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/filter_all"
+                android:checked="true"
+                android:gravity="center"
+                android:textColor="?attr/colorOnSurface" />
+
+            <RadioButton
+                android:id="@+id/filterChecked"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/filter_checked"
+                android:gravity="center"
+                android:textColor="?attr/colorOnSurface" />
+
+            <RadioButton
+                android:id="@+id/filterUnchecked"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/filter_unchecked"
+                android:gravity="center"
+                android:textColor="?attr/colorOnSurface" />
+
+        </RadioGroup>
+
         <TextView
             android:id="@+id/emptyMessage"
             android:layout_width="wrap_content"
@@ -56,7 +99,7 @@
             app:layout_constraintBottom_toTopOf="@id/addFolderButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
+            app:layout_constraintTop_toBottomOf="@id/filterRadioGroup" />
 
         <TextView
             android:id="@+id/loadingMessage"
@@ -67,7 +110,7 @@
             app:layout_constraintBottom_toTopOf="@id/playerPanel"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
+            app:layout_constraintTop_toBottomOf="@id/filterRadioGroup" />
 
         <ListView
             android:id="@+id/folderListView"

@@ -12,10 +12,14 @@ import org.json.JSONArray
 class NotificationListener : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
-        // 모든 알림에 대해 알림 소리 변경 (기타 알림, 미리알림, 캘린더 소리, 문자 알림 등)
-        Thread {
-            updateNotificationRingtone()
-        }.start()
+        // 알림이 소리를 재생하는 경우에만 알림 소리 변경
+        val notification = sbn.notification
+        // 알림에 소리가 있거나, 기본 알림 소리를 사용하는 경우 변경
+        if (notification.sound != null || notification.defaults and android.app.Notification.DEFAULT_SOUND != 0) {
+            Thread {
+                updateNotificationRingtone()
+            }.start()
+        }
     }
 
     private fun getRandomAudioFileFromUri(uri: Uri): Uri? {
@@ -57,19 +61,35 @@ class NotificationListener : NotificationListenerService() {
             val uris = mutableListOf<Uri>()
             for (i in 0 until arr.length()) {
                 val s = arr.optString(i, null) ?: continue
-                uris.add(Uri.parse(s))
+                try {
+                    uris.add(Uri.parse(s))
+                } catch (e: Exception) {
+                    // URI 파싱 실패 시 무시
+                    continue
+                }
             }
             if (uris.isEmpty()) return
             
             val selectedUri = uris.random()
             val audioUri = getRandomAudioFileFromUri(selectedUri) ?: return
+            
+            // WRITE_SETTINGS 권한 확인
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 if (!Settings.System.canWrite(this)) {
+                    android.util.Log.w("NotificationListener", "WRITE_SETTINGS permission not granted")
                     return
                 }
             }
-            Settings.System.putString(contentResolver, Settings.System.NOTIFICATION_SOUND, audioUri.toString())
+            
+            // 알림 소리 변경
+            val result = Settings.System.putString(contentResolver, Settings.System.NOTIFICATION_SOUND, audioUri.toString())
+            if (result) {
+                android.util.Log.d("NotificationListener", "Notification sound updated: $audioUri")
+            } else {
+                android.util.Log.w("NotificationListener", "Failed to update notification sound")
+            }
         } catch (e: Exception) {
+            android.util.Log.e("NotificationListener", "Error updating notification sound", e)
             e.printStackTrace()
         }
     }

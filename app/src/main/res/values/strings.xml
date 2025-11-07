@@ -33,6 +33,7 @@
     <string name="import_invalid_file">유효하지 않은 파일입니다</string>
     <string name="search_hint">검색...</string>
     <string name="loading">로딩 중...</string>
+    <string name="loading_progress">로딩 중... %1$d/%2$d</string>
     <string name="manual">설명서</string>
     <string name="manual_title">설명서</string>
     <string name="play">재생</string>
@@ -44,4 +45,7 @@
     <string name="adding_progress">%1$d/%2$d</string>
     <string name="auto_scroll_on_track_change"># 곡 넘어갈때 자동 스크롤</string>
     <string name="auto_play_next"># 곡 자동으로 넘기기</string>
+    <string name="filter_all">전체</string>
+    <string name="filter_checked">체크한것만</string>
+    <string name="filter_unchecked">체크안한것만</string>
 </resources>

@@ -79,6 +79,9 @@ class MainActivity : AppCompatActivity() {
     private var autoScrollOnTrackChange = true
     private var autoPlayNext = true
     private var drawerAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>? = null
+    private val longPressHandlers = mutableMapOf<Int, Runnable>()
+    private var isRefreshingCounts = false
+    private val refreshHandler = Handler(Looper.getMainLooper())
     private val playQueue = mutableListOf<Uri>()
     private var currentPlayIndex = -1
     private var currentlyPlayingUri: Uri? = null
@@ -291,9 +294,9 @@ class MainActivity : AppCompatActivity() {
 
         folderAdapter = FolderAdapter()
         folderListView.adapter = folderAdapter
-        folderListView.setOnItemLongClickListener { _, _, position, _ ->
-            showDeleteDialog(position)
-            true
+        // long click은 각 항목의 터치 리스너에서 처리 (1초 딜레이)
+        folderListView.setOnItemLongClickListener { _, _, _, _ ->
+            false // 기본 동작 비활성화
         }
 
         setupSearchFilter()
@@ -326,19 +329,40 @@ class MainActivity : AppCompatActivity() {
         tabLayout.getTabAt(0)?.select()
 
         // 초기 로딩은 비동기로 처리
+        loadingMessageView.text = getString(R.string.loading)
         loadingMessageView.visibility = View.VISIBLE
         folderListView.visibility = View.GONE
         emptyMessageView.visibility = View.GONE
         
         Thread {
+            // 빠른 로딩: 캐시된 데이터 먼저 로드
+            val totalCount = ringtoneFolders.size + alarmFolders.size + notificationFolders.size
+            var loadedCount = 0
+            
+            runOnUiThread {
+                loadingMessageView.text = getString(R.string.loading_progress, loadedCount, totalCount)
+            }
+            
             restoreFolders()
+            loadedCount = ringtoneFolders.size + alarmFolders.size + notificationFolders.size
+            runOnUiThread {
+                loadingMessageView.text = getString(R.string.loading_progress, loadedCount, totalCount)
+            }
+            
             restorePersistentSelections()
+            
+            // UI를 먼저 표시 (캐시된 데이터로)
             runOnUiThread {
                 categoryLoaded.add(currentCategory)
                 loadingMessageView.visibility = View.GONE
                 folderListView.visibility = View.VISIBLE
                 updateDisplayList()
             }
+            
+            // 백그라운드에서 URI 검증 (점진적으로)
+            validateAndRemoveInvalidUrisAsync(ringtoneFolders)
+            validateAndRemoveInvalidUrisAsync(alarmFolders)
+            validateAndRemoveInvalidUrisAsync(notificationFolders)
         }.start()
 
         setupPhoneStateListener()
@@ -396,10 +420,71 @@ class MainActivity : AppCompatActivity() {
         loadCategoryFolders(KEY_RINGTONE_FOLDERS, ringtoneFolders)
         loadCategoryFolders(KEY_ALARM_FOLDERS, alarmFolders)
         loadCategoryFolders(KEY_NOTIFICATION_FOLDERS, notificationFolders)
-        validateAndRemoveInvalidUris(ringtoneFolders)
-        validateAndRemoveInvalidUris(alarmFolders)
-        validateAndRemoveInvalidUris(notificationFolders)
-        // updateDisplayList()는 UI 스레드에서 호출해야 함
+        
+        // 캐시된 카운트와 duration 로드
+        loadCachedCounts()
+        loadCachedDurations()
+        
+        // URI 검증은 백그라운드에서 점진적으로 수행 (초기 로딩 속도 향상)
+        // validateAndRemoveInvalidUris는 백그라운드에서 실행
+    }
+    
+    private fun loadCachedCounts() {
+        val cachedString = preferences.getString(KEY_FOLDER_COUNTS_CACHE, null) ?: return
+        try {
+            val json = JSONObject(cachedString)
+            folderCounts.clear()
+            json.keys().forEach { key ->
+                val uri = Uri.parse(key)
+                val count = json.optInt(key, 0)
+                if (count > 0) {
+                    folderCounts[uri] = count
+                }
+            }
+        } catch (e: Exception) {
+            // 캐시 로드 실패 시 무시
+        }
+    }
+    
+    private fun loadCachedDurations() {
+        val cachedString = preferences.getString(KEY_FILE_DURATIONS_CACHE, null) ?: return
+        try {
+            val json = JSONObject(cachedString)
+            fileDurationsMs.clear()
+            json.keys().forEach { key ->
+                val uri = Uri.parse(key)
+                val duration = json.optLong(key, 0)
+                if (duration > 0) {
+                    fileDurationsMs[uri] = duration
+                }
+            }
+        } catch (e: Exception) {
+            // 캐시 로드 실패 시 무시
+        }
+    }
+    
+    private fun saveCachedCounts() {
+        try {
+            val json = JSONObject()
+            folderCounts.forEach { (uri, count) ->
+                json.put(uri.toString(), count)
+            }
+            preferences.edit().putString(KEY_FOLDER_COUNTS_CACHE, json.toString()).apply()
+        } catch (e: Exception) {
+            // 캐시 저장 실패 시 무시
+        }
+    }
+    
+    private fun saveCachedDurations() {
+        try {
+            val json = JSONObject()
+            fileDurationsMs.forEach { (uri, duration) ->
+                json.put(uri.toString(), duration)
+            }
+            preferences.edit().putString(KEY_FILE_DURATIONS_CACHE, json.toString()).apply()
+        } catch (e: Exception) {
+            // 캐시 저장 실패 시 무시
+        }
     }
 
     private fun persistFolders() {
@@ -437,7 +522,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateDisplayList() {
         val currentList = getCurrentFolderList()
-        validateAndRemoveInvalidUris(currentList)
+        // validateAndRemoveInvalidUris는 백그라운드에서 점진적으로 수행
+        // validateAndRemoveInvalidUris(currentList)
         originalDisplayList.clear()
         currentList.forEach { originalDisplayList.add(getDisplayName(it)) }
         applySearchFilter()
@@ -448,11 +534,17 @@ class MainActivity : AppCompatActivity() {
         updateTabCounts()
         // 카운트는 이미 로드된 경우에만 새로고침
         if (categoryLoaded.contains(currentCategory)) {
-            refreshCountsForCurrentCategory()
+            // 지연 로딩: UI가 먼저 표시된 후 백그라운드에서 카운트 계산
+            refreshHandler.postDelayed({
+                refreshCountsForCurrentCategory()
+            }, 300) // 300ms 지연
         } else {
             // 처음 로드하는 경우에만 카운트 새로고침
             categoryLoaded.add(currentCategory)
-            refreshCountsForCurrentCategory()
+            // 지연 로딩: UI가 먼저 표시된 후 백그라운드에서 카운트 계산
+            refreshHandler.postDelayed({
+                refreshCountsForCurrentCategory()
+            }, 300) // 300ms 지연
         }
     }
     
@@ -564,6 +656,58 @@ class MainActivity : AppCompatActivity() {
             persistFolders()
         }
     }
+    
+    private fun validateAndRemoveInvalidUrisAsync(target: MutableList<Uri>) {
+        // 백그라운드에서 점진적으로 검증 (초기 로딩 속도 향상)
+        Thread {
+            val toRemove = mutableListOf<Uri>()
+            var processedCount = 0
+            val BATCH_SIZE = 10 // 한 번에 처리할 URI 수
+            
+            for (uri in target) {
+                try {
+                    val asTree = DocumentFile.fromTreeUri(this, uri)
+                    val asSingle = DocumentFile.fromSingleUri(this, uri)
+                    val exists = when {
+                        asTree != null -> asTree.exists()
+                        asSingle != null -> asSingle.exists()
+                        else -> false
+                    }
+                    if (!exists) {
+                        toRemove.add(uri)
+                    }
+                } catch (e: Exception) {
+                    // 에러 발생 시 제거
+                    toRemove.add(uri)
+                }
+                
+                processedCount++
+                // 배치 단위로 UI 업데이트
+                if (processedCount % BATCH_SIZE == 0) {
+                    if (toRemove.isNotEmpty()) {
+                        runOnUiThread {
+                            target.removeAll(toRemove)
+                            toRemove.clear()
+                            updateDisplayList()
+                            persistFolders()
+                        }
+                    }
+                    Thread.sleep(50) // CPU 부하 완화
+                }
+            }
+            
+            // 남은 항목 처리
+            if (toRemove.isNotEmpty()) {
+                runOnUiThread {
+                    target.removeAll(toRemove)
+                    if (toRemove.isNotEmpty()) {
+                        updateDisplayList()
+                        persistFolders()
+                    }
+                }
+            }
+        }.start()
+    }
 
     private fun loadCategoryFolders(key: String, target: MutableList<Uri>) {
         target.clear()
@@ -613,6 +757,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_NOTIFICATION_SELECTED = "persistent_selected_notification"
         private const val KEY_AUTO_SCROLL_ON_TRACK_CHANGE = "auto_scroll_on_track_change"
         private const val KEY_AUTO_PLAY_NEXT = "auto_play_next"
+        private const val KEY_FOLDER_COUNTS_CACHE = "folder_counts_cache"
+        private const val KEY_FILE_DURATIONS_CACHE = "file_durations_cache"
     }
 
     private enum class FolderCategory {
@@ -663,11 +809,34 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            view.setOnTouchListener { v, event ->
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        if (!selectionMode) {
+                            // 1초 후 삭제 다이얼로그 표시
+                            val handler = Runnable {
+                                showDeleteDialog(position)
+                            }
+                            longPressHandlers[position] = handler
+                            uiHandler.postDelayed(handler, 1000) // 1초 = 1000ms
+                        }
+                        false
+                    }
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        // 터치가 끝나면 대기 중인 핸들러 제거
+                        longPressHandlers[position]?.let {
+                            uiHandler.removeCallbacks(it)
+                            longPressHandlers.remove(position)
+                        }
+                        false
+                    }
+                    else -> false
+                }
+            }
+            
             view.setOnLongClickListener {
-                if (!selectionMode) {
-                    showDeleteDialog(position)
-                    true
-                } else false
+                // 기본 long click은 사용하지 않음 (터치 리스너에서 처리)
+                false
             }
 
             val uri = getUriForDisplayPosition(position)
@@ -1001,10 +1170,33 @@ class MainActivity : AppCompatActivity() {
         uiHandler.removeCallbacks(progressUpdater)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 앱이 다시 포그라운드로 돌아올 때 MediaPlayer 상태와 UI 동기화
+        if (mediaPlayer != null) {
+            updatePlayPauseButtons()
+            updateSeekBar()
+            updateTimeText()
+            // 재생 중이면 progress updater 재시작
+            if (mediaPlayer!!.isPlaying) {
+                startProgressUpdater()
+            }
+            // 재생 중인 항목 강조 업데이트
+            folderAdapter.notifyDataSetChanged()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // 백그라운드로 갈 때 progress updater 중지 (MediaPlayer는 계속 재생)
+        stopProgressUpdater()
+    }
+
     override fun onStop() {
         super.onStop()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        // MediaPlayer는 onStop에서 release하지 않음 (백그라운드 재생 유지)
+        // mediaPlayer?.release()
+        // mediaPlayer = null
         stopProgressUpdater()
     }
 
@@ -1128,8 +1320,16 @@ class MainActivity : AppCompatActivity() {
             val enabledListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
             val packageName = packageName
             if (enabledListeners == null || !enabledListeners.contains(packageName)) {
-                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                startActivity(intent)
+                // NotificationListenerService 활성화 안내
+                AlertDialog.Builder(this)
+                    .setTitle("알림 접근 권한 필요")
+                    .setMessage("알림음 자동 변경 기능을 사용하려면 알림 접근 권한이 필요합니다.\n설정 화면에서 'RandomRingtone'을 활성화해주세요.")
+                    .setPositiveButton("설정 열기") { _, _ ->
+                        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        startActivity(intent)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
             }
         }
     }
@@ -1196,29 +1396,88 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshCountsForCurrentCategory() {
+        if (isRefreshingCounts) return // 이미 새로고침 중이면 중복 실행 방지
+        isRefreshingCounts = true
+        
         val list = getCurrentFolderList().toList()
+        if (list.isEmpty()) {
+            isRefreshingCounts = false
+            return
+        }
+        
+        val totalCount = list.size
+        runOnUiThread {
+            loadingMessageView.text = getString(R.string.loading_progress, 0, totalCount)
+            loadingMessageView.visibility = View.VISIBLE
+        }
+        
         Thread {
-            var updated = false
+            var processedCount = 0
+            var lastUpdateTime = System.currentTimeMillis()
+            val BATCH_SIZE = 5 // 한 번에 처리할 항목 수
+            val UPDATE_INTERVAL = 500L // UI 업데이트 간격 (ms)
+            
             for (uri in list) {
                 val asTree = DocumentFile.fromTreeUri(this, uri)
                 val asSingle = DocumentFile.fromSingleUri(this, uri)
+                
                 if (asTree != null && asTree.isDirectory) {
                     if (!folderCounts.containsKey(uri)) {
-                        val count = countAudioRecursively(uri)
+                        // 폴더 카운트는 빠르게 처리 (재귀 탐색 최소화)
+                        val count = try {
+                            countAudioRecursively(uri)
+                        } catch (e: Exception) {
+                            0 // 에러 발생 시 0으로 설정
+                        }
                         folderCounts[uri] = count
-                        updated = true
                     }
                 } else if (asSingle != null && asSingle.isFile) {
                     if (!fileDurationsMs.containsKey(uri)) {
-                        val duration = readAudioDurationMs(uri)
+                        // duration 읽기는 느릴 수 있으므로 배치 처리
+                        val duration = try {
+                            readAudioDurationMs(uri)
+                        } catch (e: Exception) {
+                            null // 에러 발생 시 null
+                        }
                         if (duration != null) {
                             fileDurationsMs[uri] = duration
-                            updated = true
                         }
                     }
                 }
+                
+                processedCount++
+                val currentTime = System.currentTimeMillis()
+                
+                // 배치 단위로 또는 일정 시간마다 UI 업데이트
+                if (processedCount % BATCH_SIZE == 0 || (currentTime - lastUpdateTime) >= UPDATE_INTERVAL) {
+                    runOnUiThread {
+                        // 로딩 메시지 업데이트
+                        loadingMessageView.text = getString(R.string.loading_progress, processedCount, totalCount)
+                        // 화면에 보이는 항목만 업데이트
+                        val firstVisible = folderListView.firstVisiblePosition
+                        val lastVisible = folderListView.lastVisiblePosition
+                        if (firstVisible >= 0 && lastVisible >= firstVisible) {
+                            folderAdapter.notifyDataSetChanged()
+                        }
+                    }
+                    lastUpdateTime = currentTime
+                }
+                
+                // 너무 오래 걸리면 중단 (최대 10초)
+                if (currentTime - lastUpdateTime > 10000) {
+                    break
+                }
             }
-            if (updated) runOnUiThread { folderAdapter.notifyDataSetChanged() }
+            
+            runOnUiThread {
+                folderAdapter.notifyDataSetChanged()
+                isRefreshingCounts = false
+                // 로딩 메시지 숨기기
+                loadingMessageView.visibility = View.GONE
+                // 캐시 저장
+                saveCachedCounts()
+                saveCachedDurations()
+            }
         }.start()
     }
 
@@ -1316,17 +1575,31 @@ class MainActivity : AppCompatActivity() {
     private fun countAudioInDocument(doc: DocumentFile): Int {
         if (!doc.canRead()) return 0
         if (doc.isFile) {
+            // 파일명으로 먼저 빠르게 체크 (MIME 타입 체크는 느릴 수 있음)
+            val name = doc.name?.lowercase() ?: return 0
+            if (name.endsWith(".mp3") || name.endsWith(".wav") || name.endsWith(".m4a") ||
+                name.endsWith(".aac") || name.endsWith(".ogg") || name.endsWith(".flac")) {
+                return 1
+            }
+            // 파일명으로 판단 안되면 MIME 타입 체크
             val mime = doc.type
             if (mime != null && mime.startsWith("audio")) return 1
-            val name = doc.name?.lowercase() ?: return 0
-            return if (name.endsWith(".mp3") || name.endsWith(".wav") || name.endsWith(".m4a") ||
-                name.endsWith(".aac") || name.endsWith(".ogg") || name.endsWith(".flac")) 1 else 0
+            return 0
         }
         if (doc.isDirectory) {
             var total = 0
-            val children = doc.listFiles()
-            for (child in children) {
-                total += countAudioInDocument(child)
+            try {
+                val children = doc.listFiles()
+                // 너무 많은 파일이 있으면 제한 (성능 보호)
+                val maxFiles = 10000
+                var fileCount = 0
+                for (child in children) {
+                    if (fileCount++ > maxFiles) break
+                    total += countAudioInDocument(child)
+                }
+            } catch (e: Exception) {
+                // 에러 발생 시 0 반환
+                return 0
             }
             return total
         }
@@ -1356,7 +1629,8 @@ class MainActivity : AppCompatActivity() {
             val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
             retriever.release()
             durationStr?.toLongOrNull()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            // 에러 발생 시 null 반환 (너무 자주 로그를 남기지 않음)
             null
         }
     }
