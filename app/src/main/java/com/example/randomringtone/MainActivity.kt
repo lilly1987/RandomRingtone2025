@@ -341,6 +341,7 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 categoryLoaded.add(FolderCategory.RINGTONE)
                 if (currentCategory == FolderCategory.RINGTONE) {
+                    updateListViewVisibility()
                     updateDisplayList()
                 }
             }
@@ -356,6 +357,7 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 categoryLoaded.add(FolderCategory.ALARM)
                 if (currentCategory == FolderCategory.ALARM) {
+                    updateListViewVisibility()
                     updateDisplayList()
                 }
             }
@@ -371,6 +373,7 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 categoryLoaded.add(FolderCategory.NOTIFICATION)
                 if (currentCategory == FolderCategory.NOTIFICATION) {
+                    updateListViewVisibility()
                     updateDisplayList()
                 }
             }
@@ -625,7 +628,8 @@ class MainActivity : AppCompatActivity() {
         val currentDisplayList = getCurrentDisplayList()
         
         // 목록 뷰의 내용물이 다 만들어지기 전까지는 로딩 메시지 표시, 목록 뷰는 백그라운드로
-        if (currentOriginalList.isEmpty()) {
+        // categoryLoaded에 포함되지 않았거나 originalList가 비어있으면 로딩 중
+        if (!categoryLoaded.contains(currentCategory) || currentOriginalList.isEmpty()) {
             // 아직 로딩 중: 로딩 메시지 표시, 목록 뷰 숨김
             loadingMessageView.text = getString(R.string.loading)
             loadingMessageView.visibility = View.VISIBLE
@@ -943,6 +947,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getDisplayName(uri: Uri): String = uri.lastPathSegment ?: uri.toString()
+    
+    private fun getAudioFileName(uri: Uri): String {
+        return try {
+            val doc = DocumentFile.fromSingleUri(this, uri)
+            doc?.name ?: uri.lastPathSegment ?: uri.toString()
+        } catch (e: Exception) {
+            uri.lastPathSegment ?: uri.toString()
+        }
+    }
 
     private fun validateAndRemoveInvalidUris(target: MutableList<Uri>) {
         val toRemove = mutableListOf<Uri>()
@@ -958,9 +971,11 @@ class MainActivity : AppCompatActivity() {
                 toRemove.add(uri)
             }
         }
+        // 파일이 삭제되어도 체크 정보는 유지 (target에서만 제거)
         target.removeAll(toRemove)
         if (toRemove.isNotEmpty()) {
             persistFolders()
+            // 체크 정보는 유지하므로 persistPersistentSelections()는 호출하지 않음
         }
     }
     
@@ -993,10 +1008,12 @@ class MainActivity : AppCompatActivity() {
                 if (processedCount % BATCH_SIZE == 0) {
                     if (toRemove.isNotEmpty()) {
                         runOnUiThread {
+                            // 파일이 삭제되어도 체크 정보는 유지 (target에서만 제거)
                             target.removeAll(toRemove)
                             toRemove.clear()
                             updateDisplayList()
                             persistFolders()
+                            // 체크 정보는 유지하므로 persistPersistentSelections()는 호출하지 않음
                         }
                     }
                     Thread.sleep(50) // CPU 부하 완화
@@ -1006,10 +1023,12 @@ class MainActivity : AppCompatActivity() {
             // 남은 항목 처리
             if (toRemove.isNotEmpty()) {
                 runOnUiThread {
+                    // 파일이 삭제되어도 체크 정보는 유지 (target에서만 제거)
                     target.removeAll(toRemove)
                     if (toRemove.isNotEmpty()) {
                         updateDisplayList()
                         persistFolders()
+                        // 체크 정보는 유지하므로 persistPersistentSelections()는 호출하지 않음
                     }
                 }
             }
@@ -1062,13 +1081,20 @@ class MainActivity : AppCompatActivity() {
             FolderCategory.NOTIFICATION -> notificationOriginalDisplayList
         }
         
-        originalList.clear()
+        // 로딩 시작: originalList를 비우고 로딩 메시지 표시
+        runOnUiThread {
+            originalList.clear()
+            // 현재 탭인 경우에만 로딩 메시지 표시
+            if (category == currentCategory) {
+                updateListViewVisibility()
+            }
+        }
         
         // 항목이 1000개 이상이면 64개씩 배치로 나눠서 처리
-        val BATCH_SIZE = 64
+        val BATCH_SIZE = 32
         val totalCount = target.size
         
-        if (totalCount >= 128) {
+        if (totalCount >= 64) {
             // 배치 단위로 처리
             val batchCount = (totalCount + BATCH_SIZE - 1) / BATCH_SIZE
             
@@ -1686,6 +1712,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             Settings.System.putString(contentResolver, Settings.System.RINGTONE, audioUri.toString())
+            // 음악 파일명 가져오기
+            val fileName = getAudioFileName(audioUri)
+            val message = "${getString(R.string.tab_ringtone)}: $fileName"
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -1710,6 +1740,10 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 Settings.System.putString(contentResolver, Settings.System.ALARM_ALERT, audioUri.toString())
+                // 음악 파일명 가져오기
+                val fileName = getAudioFileName(audioUri)
+                val message = "${getString(R.string.tab_alarm)}: $fileName"
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -1727,6 +1761,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             Settings.System.putString(contentResolver, Settings.System.NOTIFICATION_SOUND, audioUri.toString())
+            // 음악 파일명 가져오기
+            val fileName = getAudioFileName(audioUri)
+            val message = "${getString(R.string.tab_notification)}: $fileName"
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             e.printStackTrace()
         }
