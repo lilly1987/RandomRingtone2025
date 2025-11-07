@@ -720,13 +720,14 @@ class MainActivity : AppCompatActivity() {
         val asSingle = DocumentFile.fromSingleUri(this, uri)
         
         if (asTree != null && asTree.isDirectory) {
-            // 폴더인 경우: 폴더 안의 모든 음악 파일을 수집하여 재생 목록에 추가
+            // 폴더인 경우: 폴더 안의 모든 음악 파일을 수집하여 랜덤으로 재생 목록에 추가
             Thread {
                 val audioFiles = mutableListOf<Uri>()
                 collectAudioUris(asTree, audioFiles)
                 if (audioFiles.isNotEmpty()) {
                     runOnUiThread {
                         playQueue.clear()
+                        audioFiles.shuffle()
                         playQueue.addAll(audioFiles)
                         currentPlayIndex = 0
                         playCurrentTrack()
@@ -798,18 +799,36 @@ class MainActivity : AppCompatActivity() {
         }
         
         playerPreviousButton.setOnClickListener {
-            if (playQueue.isNotEmpty()) {
-                currentPlayIndex = (currentPlayIndex - 1 + playQueue.size) % playQueue.size
-                playCurrentTrack()
-            }
+            playPreviousItem()
         }
         
         playerNextButton.setOnClickListener {
-            if (playQueue.isNotEmpty()) {
-                currentPlayIndex = (currentPlayIndex + 1) % playQueue.size
-                playCurrentTrack()
-            }
+            playNextItem()
         }
+    }
+    
+    private fun playNextItem() {
+        if (currentlyPlayingUri == null) return
+        
+        val currentList = getCurrentFolderList()
+        val currentIndex = currentList.indexOf(currentlyPlayingUri)
+        if (currentIndex < 0) return
+        
+        val nextIndex = (currentIndex + 1) % currentList.size
+        val nextUri = currentList[nextIndex]
+        handleItemClickPlayback(nextUri)
+    }
+    
+    private fun playPreviousItem() {
+        if (currentlyPlayingUri == null) return
+        
+        val currentList = getCurrentFolderList()
+        val currentIndex = currentList.indexOf(currentlyPlayingUri)
+        if (currentIndex < 0) return
+        
+        val prevIndex = (currentIndex - 1 + currentList.size) % currentList.size
+        val prevUri = currentList[prevIndex]
+        handleItemClickPlayback(prevUri)
     }
     
     private fun playCurrentTrack() {

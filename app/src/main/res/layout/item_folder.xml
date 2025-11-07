@@ -7,7 +7,7 @@
         android:id="@+id/progressFill"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:background="#e0e0e0" />
+        android:background="#b0b0b0" />
 
     <LinearLayout
         android:id="@+id/itemRoot"
@@ -42,7 +42,8 @@
             android:maxLines="2"
             android:ellipsize="end"
             android:textSize="12.8sp"
-            android:textAppearance="?attr/textAppearanceListItem" />
+            android:textAppearance="?attr/textAppearanceListItem"
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/textCount"
@@ -51,7 +52,8 @@
             android:layout_marginStart="12dp"
             android:text="…"
             android:textSize="12.8sp"
-            android:textAppearance="?attr/textAppearanceListItem" />
+            android:textAppearance="?attr/textAppearanceListItem"
+            android:textColor="?attr/colorOnSurface" />
 
     </LinearLayout>
 
