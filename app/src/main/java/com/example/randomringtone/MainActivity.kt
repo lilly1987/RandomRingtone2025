@@ -28,6 +28,19 @@ import com.google.android.material.tabs.TabLayout
 import androidx.documentfile.provider.DocumentFile
 import org.json.JSONArray
 import org.json.JSONException
+import android.telephony.PhoneStateListener
+import android.telephony.TelephonyManager
+import android.content.Context
+import android.media.RingtoneManager
+import android.provider.Settings
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import android.Manifest
+import android.os.Build
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,9 +66,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private val alarmCheckUpdater = object : Runnable {
+        override fun run() {
+            checkAndUpdateAlarmRingtone()
+            uiHandler.postDelayed(this, 60000) // 1분마다 체크
+        }
+    }
     private var selectionMode = false
     private var mediaPlayer: MediaPlayer? = null
     private var currentlyPlayingUri: Uri? = null
+    private var telephonyManager: TelephonyManager? = null
+    private var phoneStateListener: PhoneStateListener? = null
     private val openFolderAllFilesLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let {
             try {
@@ -176,6 +197,9 @@ class MainActivity : AppCompatActivity() {
 
         restoreFolders()
         restorePersistentSelections()
+
+        setupPhoneStateListener()
+        uiHandler.post(alarmCheckUpdater)
 
         findViewById<FloatingActionButton>(R.id.addFolderButton).setOnClickListener {
             showAddChoiceDialog()
@@ -415,36 +439,38 @@ class MainActivity : AppCompatActivity() {
                 countView.text = "…"
             }
 
-            // 좌우 드래그로 1초 단위 탐색 (재생 중 해당 파일에만)
-            view.setOnTouchListener { _, event ->
+            // 좌우 드래그로 재생 위치 탐색 (재생 중 해당 파일에만)
+            view.setOnTouchListener { v, event ->
                 if (selectionMode) return@setOnTouchListener false
                 val rowUri = getCurrentFolderList().getOrNull(position)
                 if (rowUri == null || rowUri != currentlyPlayingUri || mediaPlayer == null) return@setOnTouchListener false
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
-                        view.setTag(R.id.itemRoot, event.x)
-                        view.setTag(R.id.textCount, event.x)
+                        val player = mediaPlayer ?: return@setOnTouchListener false
+                        view.setTag(R.id.itemRoot, event.x) // 시작 X 위치
+                        view.setTag(R.id.textCount, player.currentPosition) // 시작 재생 위치
                         false
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        val lastAppliedX = (view.getTag(R.id.textCount) as? Float) ?: event.x
-                        val dx = event.x - lastAppliedX
-
+                        val startX = (view.getTag(R.id.itemRoot) as? Float) ?: return@setOnTouchListener false
+                        val startPos = (view.getTag(R.id.textCount) as? Int) ?: return@setOnTouchListener false
                         val player = mediaPlayer ?: return@setOnTouchListener false
                         val duration = player.duration
-                        val maxSeekRange = duration / 2  // 최대 50% 이동 허용
-
-                        // 화면 너비 기준으로 상대적 이동 계산
+                        if (duration <= 0) return@setOnTouchListener false
+                        
                         val viewWidth = view.width.toFloat().coerceAtLeast(1f)
-                        val seekRatio = dx / viewWidth  // -1.0 ~ +1.0 범위
+                        val dx = event.x - startX
+                        val seekRatio = (dx / viewWidth).coerceIn(-0.5f, 0.5f) // 최대 ±50%
+                        val maxSeekRange = duration / 2
                         val seekOffset = (seekRatio * maxSeekRange).toInt()
-
-                        val newPos = (player.currentPosition + seekOffset).coerceIn(0, duration)
+                        val newPos = (startPos + seekOffset).coerceIn(0, duration)
+                        
                         player.seekTo(newPos)
-
-                        view.setTag(R.id.textCount, event.x)
                         folderAdapter.notifyDataSetChanged()
                         return@setOnTouchListener true
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        false
                     }
                     else -> false
                 }
@@ -491,6 +517,87 @@ class MainActivity : AppCompatActivity() {
         mediaPlayer = null
         currentlyPlayingUri = null
         uiHandler.removeCallbacks(progressUpdater)
+        uiHandler.removeCallbacks(alarmCheckUpdater)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        removePhoneStateListener()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            setupPhoneStateListener()
+        }
+    }
+
+    private fun setupPhoneStateListener() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_PHONE_STATE), 100)
+                return
+            }
+        }
+        telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        phoneStateListener = object : PhoneStateListener() {
+            override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                super.onCallStateChanged(state, phoneNumber)
+                if (state == TelephonyManager.CALL_STATE_RINGING) {
+                    updateRandomRingtone()
+                }
+            }
+        }
+        telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
+    }
+
+    private fun removePhoneStateListener() {
+        telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
+        phoneStateListener = null
+        telephonyManager = null
+    }
+
+    private fun updateRandomRingtone() {
+        if (ringtoneSelected.isEmpty()) return
+        val randomUri = ringtoneSelected.randomOrNull() ?: return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.System.canWrite(this)) {
+                    // WRITE_SETTINGS 권한이 없으면 요청
+                    val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+                    intent.data = android.net.Uri.parse("package:$packageName")
+                    startActivity(intent)
+                    return
+                }
+            }
+            Settings.System.putString(contentResolver, Settings.System.RINGTONE, randomUri.toString())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun checkAndUpdateAlarmRingtone() {
+        if (alarmSelected.isEmpty()) return
+        try {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val nextAlarm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.nextAlarmClock
+            } else {
+                null
+            }
+            // 알람이 설정되어 있으면 랜덤 알람 소리로 변경
+            if (nextAlarm != null) {
+                val randomUri = alarmSelected.randomOrNull() ?: return
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.System.canWrite(this)) {
+                        return
+                    }
+                }
+                Settings.System.putString(contentResolver, Settings.System.ALARM_ALERT, randomUri.toString())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun showTrashMenu() {
