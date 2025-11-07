@@ -192,27 +192,14 @@ class MainActivity : AppCompatActivity() {
                             changed = true
                         }
                         completedCount++
-                        runOnUiThread {
-                            loadingMessageView.text = getString(R.string.adding_items) + " " + getString(R.string.adding_progress, completedCount, totalCount)
-                            loadingMessageView.visibility = View.VISIBLE
-                        }
                     }
                     if (changed) {
                         runOnUiThread {
-                            loadingMessageView.visibility = View.GONE
                             if (category == currentCategory) {
                                 updateDisplayList()
                             }
                             persistFolders()
                         }
-                    } else {
-                        runOnUiThread {
-                            loadingMessageView.visibility = View.GONE
-                        }
-                    }
-                } else {
-                    runOnUiThread {
-                        loadingMessageView.visibility = View.GONE
                     }
                 }
             }.start()
@@ -239,13 +226,8 @@ class MainActivity : AppCompatActivity() {
                     added = true
                 }
                 completedCount++
-                runOnUiThread {
-                    loadingMessageView.text = getString(R.string.adding_items) + " " + getString(R.string.adding_progress, completedCount, totalCount)
-                    loadingMessageView.visibility = View.VISIBLE
-                }
             }
             runOnUiThread {
-                loadingMessageView.visibility = View.GONE
                 if (added) {
                     updateDisplayList()
                     persistFolders()
@@ -267,12 +249,9 @@ class MainActivity : AppCompatActivity() {
 
             val currentList = getCurrentFolderList()
             if (currentList.none { saved -> saved == it }) {
-                loadingMessageView.text = getString(R.string.adding_items) + " 1/1"
-                loadingMessageView.visibility = View.VISIBLE
                 currentList.add(it)
                 updateDisplayList()
                 persistFolders()
-                loadingMessageView.visibility = View.GONE
             }
         }
     }
@@ -348,59 +327,53 @@ class MainActivity : AppCompatActivity() {
 
         tabLayout.getTabAt(0)?.select()
 
-        // 초기 로딩은 비동기로 처리 (각 탭별로 분할, UI는 점진적으로 갱신)
-        loadingMessageView.text = getString(R.string.loading)
-        loadingMessageView.visibility = View.VISIBLE
-        folderListView.visibility = View.VISIBLE // 즉시 표시하여 점진적으로 갱신
-        emptyMessageView.visibility = View.GONE
+        // 초기 로딩은 비동기로 처리 (각 탭별로 별도 스레드 할당, 병렬 처리)
+        // 목록 뷰가 비어있으면 로딩 메시지 표시, 목록 뷰는 백그라운드로
+        updateListViewVisibility()
         
+        // 각 탭별로 별도 스레드 할당하여 병렬로 미리 준비
         Thread {
-            val totalTabs = 3
-            var loadedTabs = 0
-            
-            // 벨소리 탭 로딩 (1/3)
-            runOnUiThread {
-                loadingMessageView.text = getString(R.string.loading_progress, 1, totalTabs) + " - " + getString(R.string.tab_ringtone)
-            }
             loadCategoryFoldersAsync(KEY_RINGTONE_FOLDERS, ringtoneFolders, FolderCategory.RINGTONE)
             loadCachedCountsForCategory(FolderCategory.RINGTONE)
             loadCachedDurationsForCategory(FolderCategory.RINGTONE)
             restorePersistentSelectionsForCategory(FolderCategory.RINGTONE)
-            loadedTabs++
-            
-            // 알람 탭 로딩 (2/3)
+            prepareCategoryDisplayList(FolderCategory.RINGTONE)
             runOnUiThread {
-                loadingMessageView.text = getString(R.string.loading_progress, 2, totalTabs) + " - " + getString(R.string.tab_alarm)
+                categoryLoaded.add(FolderCategory.RINGTONE)
+                if (currentCategory == FolderCategory.RINGTONE) {
+                    updateDisplayList()
+                }
             }
+            validateAndRemoveInvalidUrisAsync(ringtoneFolders)
+        }.start()
+        
+        Thread {
             loadCategoryFoldersAsync(KEY_ALARM_FOLDERS, alarmFolders, FolderCategory.ALARM)
             loadCachedCountsForCategory(FolderCategory.ALARM)
             loadCachedDurationsForCategory(FolderCategory.ALARM)
             restorePersistentSelectionsForCategory(FolderCategory.ALARM)
-            loadedTabs++
-            
-            // 알림 탭 로딩 (3/3)
+            prepareCategoryDisplayList(FolderCategory.ALARM)
             runOnUiThread {
-                loadingMessageView.text = getString(R.string.loading_progress, 3, totalTabs) + " - " + getString(R.string.tab_notification)
+                categoryLoaded.add(FolderCategory.ALARM)
+                if (currentCategory == FolderCategory.ALARM) {
+                    updateDisplayList()
+                }
             }
+            validateAndRemoveInvalidUrisAsync(alarmFolders)
+        }.start()
+        
+        Thread {
             loadCategoryFoldersAsync(KEY_NOTIFICATION_FOLDERS, notificationFolders, FolderCategory.NOTIFICATION)
             loadCachedCountsForCategory(FolderCategory.NOTIFICATION)
             loadCachedDurationsForCategory(FolderCategory.NOTIFICATION)
             restorePersistentSelectionsForCategory(FolderCategory.NOTIFICATION)
-            loadedTabs++
-            
-            // 모든 탭 로딩 완료
+            prepareCategoryDisplayList(FolderCategory.NOTIFICATION)
             runOnUiThread {
-                categoryLoaded.add(currentCategory)
-                loadingMessageView.visibility = View.GONE
-                // 현재 탭의 목록 업데이트
-                if (categoryLoaded.contains(currentCategory)) {
+                categoryLoaded.add(FolderCategory.NOTIFICATION)
+                if (currentCategory == FolderCategory.NOTIFICATION) {
                     updateDisplayList()
                 }
             }
-            
-            // 백그라운드에서 URI 검증 (점진적으로)
-            validateAndRemoveInvalidUrisAsync(ringtoneFolders)
-            validateAndRemoveInvalidUrisAsync(alarmFolders)
             validateAndRemoveInvalidUrisAsync(notificationFolders)
         }.start()
 
@@ -445,6 +418,30 @@ class MainActivity : AppCompatActivity() {
         // 로딩 메시지와 빈 메시지가 터치를 차단하지 않도록 설정
         loadingMessageView.setOnTouchListener { _, _ -> false }
         emptyMessageView.setOnTouchListener { _, _ -> false }
+        
+        // 모든 UI 요소가 로딩 중에도 사용 가능하도록 설정
+        folderListView.isEnabled = true
+        folderListView.isClickable = true
+        searchEditText.isEnabled = true
+        searchEditText.isClickable = true
+        searchEditText.isFocusable = true
+        
+        // 필터 옵션도 활성화
+        val filterRadioGroup = findViewById<android.widget.RadioGroup>(R.id.filterRadioGroup)
+        filterRadioGroup.isEnabled = true
+        filterRadioGroup.isClickable = true
+        
+        // 플레이어 패널도 활성화
+        playerPanel.isEnabled = true
+        playerPanel.isClickable = true
+        
+        // FAB 버튼들도 활성화
+        findViewById<FloatingActionButton>(R.id.addFolderButton).isEnabled = true
+        findViewById<FloatingActionButton>(R.id.addFolderButton).isClickable = true
+        findViewById<FloatingActionButton>(R.id.deleteSelectedButton).isEnabled = true
+        findViewById<FloatingActionButton>(R.id.deleteSelectedButton).isClickable = true
+        findViewById<FloatingActionButton>(R.id.cancelSelectionButton).isEnabled = true
+        findViewById<FloatingActionButton>(R.id.cancelSelectionButton).isClickable = true
 
         findViewById<FloatingActionButton>(R.id.addFolderButton).setOnClickListener {
             showAddChoiceDialog()
@@ -623,9 +620,44 @@ class MainActivity : AppCompatActivity() {
         updateTabCounts()
     }
 
+    private fun updateListViewVisibility() {
+        val currentOriginalList = getCurrentOriginalDisplayList()
+        val currentDisplayList = getCurrentDisplayList()
+        
+        // 목록 뷰의 내용물이 다 만들어지기 전까지는 로딩 메시지 표시, 목록 뷰는 백그라운드로
+        if (currentOriginalList.isEmpty()) {
+            // 아직 로딩 중: 로딩 메시지 표시, 목록 뷰 숨김
+            loadingMessageView.text = getString(R.string.loading)
+            loadingMessageView.visibility = View.VISIBLE
+            folderListView.visibility = View.GONE
+            emptyMessageView.visibility = View.GONE
+        } else {
+            // 로딩 완료: 목록 뷰 표시, 로딩 메시지 숨김
+            loadingMessageView.visibility = View.GONE
+            folderListView.visibility = View.VISIBLE
+            // 빈 메시지는 displayList 기준으로 표시
+            emptyMessageView.visibility = if (currentDisplayList.isEmpty()) View.VISIBLE else View.GONE
+        }
+    }
+    
     private fun updateEmptyState() {
         val currentDisplayList = getCurrentDisplayList()
-        emptyMessageView.visibility = if (currentDisplayList.isEmpty()) View.VISIBLE else View.GONE
+        val currentOriginalList = getCurrentOriginalDisplayList()
+        
+        // 목록 뷰의 내용물이 다 만들어지기 전까지는 로딩 메시지 표시
+        if (currentOriginalList.isEmpty()) {
+            // 아직 로딩 중: 로딩 메시지 표시, 목록 뷰 숨김
+            loadingMessageView.text = getString(R.string.loading)
+            loadingMessageView.visibility = View.VISIBLE
+            folderListView.visibility = View.GONE
+            emptyMessageView.visibility = View.GONE
+        } else {
+            // 로딩 완료: 목록 뷰 표시, 로딩 메시지 숨김
+            loadingMessageView.visibility = View.GONE
+            folderListView.visibility = View.VISIBLE
+            emptyMessageView.visibility = if (currentDisplayList.isEmpty()) View.VISIBLE else View.GONE
+        }
+        
         val deleteFab = findViewById<FloatingActionButton>(R.id.deleteSelectedButton)
         val addFab = findViewById<FloatingActionButton>(R.id.addFolderButton)
         val cancelFab = findViewById<FloatingActionButton>(R.id.cancelSelectionButton)
@@ -693,14 +725,15 @@ class MainActivity : AppCompatActivity() {
         val currentOriginalList = getCurrentOriginalDisplayList()
         val currentDisplayList = getCurrentDisplayList()
         
-        // validateAndRemoveInvalidUris는 백그라운드에서 점진적으로 수행
-        // validateAndRemoveInvalidUris(currentList)
-        currentOriginalList.clear()
-        currentList.forEach { currentOriginalList.add(getDisplayName(it)) }
+        // originalDisplayList는 이미 prepareCategoryDisplayList에서 준비됨
+        // 여기서는 필터만 적용
         applySearchFilter()
         deleteSelectedPositions.clear()
         selectionMode = false
         folderAdapter.notifyDataSetChanged()
+        
+        // 목록 뷰 표시 상태 업데이트
+        updateListViewVisibility()
         updateEmptyState()
         updateTabCounts()
         // 카운트는 이미 로드된 경우에만 새로고침
@@ -741,11 +774,14 @@ class MainActivity : AppCompatActivity() {
             // 검색 필터만 다시 적용
             applySearchFilter()
             folderAdapter.notifyDataSetChanged()
+            updateListViewVisibility()
             updateEmptyState()
         } else {
-            // 처음 로드하는 경우에만 updateDisplayList 호출
-            categoryLoaded.add(category)
-            updateDisplayList()
+            // 아직 로딩 중이면 대기 (prepareCategoryDisplayList가 완료될 때까지)
+            // categoryLoaded는 prepareCategoryDisplayList 완료 후 추가됨
+            // 여기서는 UI만 업데이트
+            updateListViewVisibility()
+            updateEmptyState()
         }
     }
     
@@ -1002,27 +1038,74 @@ class MainActivity : AppCompatActivity() {
             val jsonArray = JSONArray(savedString)
             val totalCount = jsonArray.length()
             
+            // 모든 항목을 먼저 추가
             for (i in 0 until jsonArray.length()) {
                 val uriString = jsonArray.optString(i, null) ?: continue
                 val uri = Uri.parse(uriString)
                 target.add(uri)
-                
-                // 각 항목을 추가할 때마다 UI 갱신 (현재 탭인 경우에만)
-                if (category == currentCategory) {
-                    runOnUiThread {
-                        // originalDisplayList에 추가
-                        val currentOriginalList = getCurrentOriginalDisplayList()
-                        currentOriginalList.add(getDisplayName(uri))
-                        // 필터 적용하여 displayList 업데이트
-                        applySearchFilter()
-                        // 빈 상태 업데이트
-                        updateEmptyState()
-                    }
-                }
             }
         } catch (_: JSONException) {
             target.clear()
             preferences.edit().remove(key).apply()
+        }
+    }
+    
+    private fun prepareCategoryDisplayList(category: FolderCategory) {
+        val target = when (category) {
+            FolderCategory.RINGTONE -> ringtoneFolders
+            FolderCategory.ALARM -> alarmFolders
+            FolderCategory.NOTIFICATION -> notificationFolders
+        }
+        val originalList = when (category) {
+            FolderCategory.RINGTONE -> ringtoneOriginalDisplayList
+            FolderCategory.ALARM -> alarmOriginalDisplayList
+            FolderCategory.NOTIFICATION -> notificationOriginalDisplayList
+        }
+        
+        originalList.clear()
+        
+        // 항목이 1000개 이상이면 64개씩 배치로 나눠서 처리
+        val BATCH_SIZE = 64
+        val totalCount = target.size
+        
+        if (totalCount >= 128) {
+            // 배치 단위로 처리
+            val batchCount = (totalCount + BATCH_SIZE - 1) / BATCH_SIZE
+            
+            for (batchIndex in 0 until batchCount) {
+                val startIndex = batchIndex * BATCH_SIZE
+                val endIndex = minOf(startIndex + BATCH_SIZE, totalCount)
+                
+                // 각 배치를 별도 스레드에서 처리하거나 순차 처리
+                val batchUris = target.subList(startIndex, endIndex)
+                val batchNames = batchUris.map { getDisplayName(it) }
+                
+                // UI 스레드에서 배치 단위로 추가
+                runOnUiThread {
+                    originalList.addAll(batchNames)
+                    // 현재 탭인 경우에만 UI 업데이트 (배치 처리 중에는 categoryLoaded에 아직 추가되지 않았으므로 체크하지 않음)
+                    if (category == currentCategory) {
+                        applySearchFilter()
+                        folderAdapter.notifyDataSetChanged()
+                        updateListViewVisibility()
+                    }
+                }
+                
+                // CPU 부하 완화를 위한 짧은 대기
+                Thread.sleep(10)
+            }
+        } else {
+            // 항목이 적으면 한 번에 처리
+            val names = target.map { getDisplayName(it) }
+            runOnUiThread {
+                originalList.addAll(names)
+                // 현재 탭인 경우에만 UI 업데이트
+                if (category == currentCategory) {
+                    applySearchFilter()
+                    folderAdapter.notifyDataSetChanged()
+                    updateListViewVisibility()
+                }
+            }
         }
     }
 
@@ -1740,10 +1823,6 @@ class MainActivity : AppCompatActivity() {
         }
         
         val totalCount = list.size
-        runOnUiThread {
-            loadingMessageView.text = getString(R.string.loading_progress, 0, totalCount)
-            loadingMessageView.visibility = View.VISIBLE
-        }
         
         Thread {
             var processedCount = 0
@@ -1785,8 +1864,6 @@ class MainActivity : AppCompatActivity() {
                 // 배치 단위로 또는 일정 시간마다 UI 업데이트
                 if (processedCount % BATCH_SIZE == 0 || (currentTime - lastUpdateTime) >= UPDATE_INTERVAL) {
                     runOnUiThread {
-                        // 로딩 메시지 업데이트
-                        loadingMessageView.text = getString(R.string.loading_progress, processedCount, totalCount)
                         // 화면에 보이는 항목만 업데이트
                         val firstVisible = folderListView.firstVisiblePosition
                         val lastVisible = folderListView.lastVisiblePosition
@@ -1803,15 +1880,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             
-            runOnUiThread {
-                folderAdapter.notifyDataSetChanged()
-                isRefreshingCounts = false
-                // 로딩 메시지 숨기기
-                loadingMessageView.visibility = View.GONE
-                // 캐시 저장
-                saveCachedCounts()
-                saveCachedDurations()
-            }
+                    runOnUiThread {
+                        folderAdapter.notifyDataSetChanged()
+                        isRefreshingCounts = false
+                        // 캐시 저장
+                        saveCachedCounts()
+                        saveCachedDurations()
+                    }
         }.start()
     }
 
