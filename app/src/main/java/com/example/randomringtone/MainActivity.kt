@@ -429,17 +429,22 @@ class MainActivity : AppCompatActivity() {
                     MotionEvent.ACTION_MOVE -> {
                         val lastAppliedX = (view.getTag(R.id.textCount) as? Float) ?: event.x
                         val dx = event.x - lastAppliedX
-                        val stepPx = dpToPx(40f)
-                        val steps = (dx / stepPx).toInt()
-                        if (steps != 0) {
-                            val player = mediaPlayer ?: return@setOnTouchListener false
-                            val newPos = (player.currentPosition + steps * 1000).coerceIn(0, player.duration)
-                            player.seekTo(newPos)
-                            view.setTag(R.id.textCount, lastAppliedX + steps * stepPx)
-                            folderAdapter.notifyDataSetChanged()
-                            return@setOnTouchListener true
-                        }
-                        false
+
+                        val player = mediaPlayer ?: return@setOnTouchListener false
+                        val duration = player.duration
+                        val maxSeekRange = duration / 2  // 최대 50% 이동 허용
+
+                        // 화면 너비 기준으로 상대적 이동 계산
+                        val viewWidth = view.width.toFloat().coerceAtLeast(1f)
+                        val seekRatio = dx / viewWidth  // -1.0 ~ +1.0 범위
+                        val seekOffset = (seekRatio * maxSeekRange).toInt()
+
+                        val newPos = (player.currentPosition + seekOffset).coerceIn(0, duration)
+                        player.seekTo(newPos)
+
+                        view.setTag(R.id.textCount, event.x)
+                        folderAdapter.notifyDataSetChanged()
+                        return@setOnTouchListener true
                     }
                     else -> false
                 }
