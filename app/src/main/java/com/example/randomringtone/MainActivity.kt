@@ -171,6 +171,16 @@ class MainActivity : AppCompatActivity() {
                 )
             } catch (_: SecurityException) { }
 
+            // 추가 중 표시 시작
+            runOnUiThread {
+                if (category == currentCategory) {
+                    loadingMessageView.text = getString(R.string.adding_items)
+                    loadingMessageView.visibility = View.VISIBLE
+                    folderListView.visibility = View.GONE
+                    emptyMessageView.visibility = View.GONE
+                }
+            }
+
             Thread {
                 val addedUris = mutableListOf<Uri>()
                 val root = DocumentFile.fromTreeUri(this, it)
@@ -192,6 +202,13 @@ class MainActivity : AppCompatActivity() {
                             changed = true
                         }
                         completedCount++
+                        // 진행 상황 업데이트
+                        if (category == currentCategory) {
+                            runOnUiThread {
+                                loadingMessageView.text = getString(R.string.adding_items) + " " + 
+                                    getString(R.string.adding_progress, completedCount, totalCount)
+                            }
+                        }
                     }
                     if (changed) {
                         runOnUiThread {
@@ -199,6 +216,13 @@ class MainActivity : AppCompatActivity() {
                                 updateDisplayList()
                             }
                             persistFolders()
+                        }
+                    }
+                } else {
+                    // 추가할 항목이 없으면 추가 중 표시 제거
+                    runOnUiThread {
+                        if (category == currentCategory) {
+                            updateListViewVisibility()
                         }
                     }
                 }
@@ -213,6 +237,14 @@ class MainActivity : AppCompatActivity() {
         var completedCount = 0
         var added = false
         
+        // 추가 중 표시 시작
+        runOnUiThread {
+            loadingMessageView.text = getString(R.string.adding_items)
+            loadingMessageView.visibility = View.VISIBLE
+            folderListView.visibility = View.GONE
+            emptyMessageView.visibility = View.GONE
+        }
+        
         Thread {
             for (uri in uris) {
                 try {
@@ -226,11 +258,19 @@ class MainActivity : AppCompatActivity() {
                     added = true
                 }
                 completedCount++
+                // 진행 상황 업데이트
+                runOnUiThread {
+                    loadingMessageView.text = getString(R.string.adding_items) + " " + 
+                        getString(R.string.adding_progress, completedCount, totalCount)
+                }
             }
             runOnUiThread {
                 if (added) {
                     updateDisplayList()
                     persistFolders()
+                } else {
+                    // 추가할 항목이 없으면 추가 중 표시 제거
+                    updateListViewVisibility()
                 }
             }
         }.start()
@@ -247,11 +287,24 @@ class MainActivity : AppCompatActivity() {
                 // 권한을 얻지 못해도 선택한 폴더는 배열에 추가한다.
             }
 
+            // 추가 중 표시 시작
+            runOnUiThread {
+                loadingMessageView.text = getString(R.string.adding_items)
+                loadingMessageView.visibility = View.VISIBLE
+                folderListView.visibility = View.GONE
+                emptyMessageView.visibility = View.GONE
+            }
+
             val currentList = getCurrentFolderList()
             if (currentList.none { saved -> saved == it }) {
                 currentList.add(it)
                 updateDisplayList()
                 persistFolders()
+            } else {
+                // 이미 추가된 항목이면 추가 중 표시 제거
+                runOnUiThread {
+                    updateListViewVisibility()
+                }
             }
         }
     }
@@ -628,8 +681,8 @@ class MainActivity : AppCompatActivity() {
         val currentDisplayList = getCurrentDisplayList()
         
         // 목록 뷰의 내용물이 다 만들어지기 전까지는 로딩 메시지 표시, 목록 뷰는 백그라운드로
-        // categoryLoaded에 포함되지 않았거나 originalList가 비어있으면 로딩 중
-        if (!categoryLoaded.contains(currentCategory) || currentOriginalList.isEmpty()) {
+        // categoryLoaded에 포함되지 않았으면 로딩 중
+        if (!categoryLoaded.contains(currentCategory)) {
             // 아직 로딩 중: 로딩 메시지 표시, 목록 뷰 숨김
             loadingMessageView.text = getString(R.string.loading)
             loadingMessageView.visibility = View.VISIBLE
@@ -639,7 +692,7 @@ class MainActivity : AppCompatActivity() {
             // 로딩 완료: 목록 뷰 표시, 로딩 메시지 숨김
             loadingMessageView.visibility = View.GONE
             folderListView.visibility = View.VISIBLE
-            // 빈 메시지는 displayList 기준으로 표시
+            // 빈 메시지는 displayList 기준으로 표시 (목록이 실제로 비어있는 경우)
             emptyMessageView.visibility = if (currentDisplayList.isEmpty()) View.VISIBLE else View.GONE
         }
     }
@@ -649,7 +702,8 @@ class MainActivity : AppCompatActivity() {
         val currentOriginalList = getCurrentOriginalDisplayList()
         
         // 목록 뷰의 내용물이 다 만들어지기 전까지는 로딩 메시지 표시
-        if (currentOriginalList.isEmpty()) {
+        // categoryLoaded에 포함되지 않았으면 로딩 중
+        if (!categoryLoaded.contains(currentCategory)) {
             // 아직 로딩 중: 로딩 메시지 표시, 목록 뷰 숨김
             loadingMessageView.text = getString(R.string.loading)
             loadingMessageView.visibility = View.VISIBLE
@@ -659,6 +713,7 @@ class MainActivity : AppCompatActivity() {
             // 로딩 완료: 목록 뷰 표시, 로딩 메시지 숨김
             loadingMessageView.visibility = View.GONE
             folderListView.visibility = View.VISIBLE
+            // 빈 메시지는 displayList 기준으로 표시 (목록이 실제로 비어있는 경우)
             emptyMessageView.visibility = if (currentDisplayList.isEmpty()) View.VISIBLE else View.GONE
         }
         
@@ -729,8 +784,11 @@ class MainActivity : AppCompatActivity() {
         val currentOriginalList = getCurrentOriginalDisplayList()
         val currentDisplayList = getCurrentDisplayList()
         
-        // originalDisplayList는 이미 prepareCategoryDisplayList에서 준비됨
-        // 여기서는 필터만 적용
+        // originalDisplayList 업데이트 (파일 추가 시 목록 갱신)
+        currentOriginalList.clear()
+        currentList.forEach { currentOriginalList.add(getDisplayName(it)) }
+        
+        // 필터 적용
         applySearchFilter()
         deleteSelectedPositions.clear()
         selectionMode = false
