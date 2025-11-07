@@ -380,16 +380,40 @@ class MainActivity : AppCompatActivity() {
 
         val menuButton = findViewById<android.widget.ImageButton>(R.id.menuButton)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
+        val mainLayout = findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
         
         // 메뉴 버튼은 항상 활성화 (로딩 중에도 사용 가능)
         menuButton.isEnabled = true
         menuButton.isClickable = true
+        menuButton.isFocusable = true
+        menuButton.elevation = 16f // 높은 elevation로 다른 요소 위에 표시
+        
+        // 레이아웃 완료 후 메뉴 버튼을 최상위로 이동
+        menuButton.post {
+            menuButton.bringToFront()
+            mainLayout.bringChildToFront(menuButton)
+        }
+        
+        // 로딩 중에도 메뉴 버튼이 최상위에 오도록 보장
+        menuButton.post {
+            menuButton.bringToFront()
+            mainLayout.bringChildToFront(menuButton)
+        }
+        
         menuButton.setOnClickListener {
             drawerLayout.openDrawer(androidx.core.view.GravityCompat.START)
         }
         
         // DrawerLayout은 항상 열 수 있도록 설정 (로딩 중에도 사용 가능)
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        
+        // 메인 레이아웃이 터치를 차단하지 않도록 설정
+        mainLayout.isClickable = false
+        mainLayout.isFocusable = false
+        
+        // 로딩 메시지와 빈 메시지가 터치를 차단하지 않도록 설정
+        loadingMessageView.setOnTouchListener { _, _ -> false }
+        emptyMessageView.setOnTouchListener { _, _ -> false }
 
         findViewById<FloatingActionButton>(R.id.addFolderButton).setOnClickListener {
             showAddChoiceDialog()
@@ -1257,6 +1281,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        
+        // 메뉴 버튼이 항상 최상위에 오도록 보장
+        val menuButton = findViewById<android.widget.ImageButton>(R.id.menuButton)
+        val mainLayout = findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
+        menuButton?.post {
+            menuButton.bringToFront()
+            mainLayout?.bringChildToFront(menuButton)
+        }
+        
         // 앱이 다시 포그라운드로 돌아올 때 MediaPlayer 상태와 UI 동기화
         if (mediaPlayer != null) {
             updatePlayPauseButtons()

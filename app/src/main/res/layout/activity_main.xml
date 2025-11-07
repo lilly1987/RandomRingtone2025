@@ -10,7 +10,9 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false">
 
         <ImageButton
             android:id="@+id/menuButton"
@@ -19,6 +21,10 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/menu"
             android:src="@drawable/ic_menu"
+            android:elevation="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -107,6 +113,8 @@
             android:layout_height="wrap_content"
             android:text="@string/loading"
             android:visibility="gone"
+            android:clickable="false"
+            android:focusable="false"
             app:layout_constraintBottom_toTopOf="@id/playerPanel"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
