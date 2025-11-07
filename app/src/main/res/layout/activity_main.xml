@@ -74,7 +74,6 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_margin="0dp"
-            android:layout_marginBottom="560dp"
             android:fadeScrollbars="false"
             android:fastScrollEnabled="true"
             android:scrollbars="vertical"
@@ -88,26 +87,55 @@
             android:id="@+id/playerPanel"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginStart="80dp"
-            android:layout_marginEnd="80dp"
+            android:layout_marginStart="70dp"
+            android:layout_marginEnd="70dp"
             android:background="?attr/colorSurface"
-            android:padding="8dp"
+            android:padding="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHeight_percent="0.1"
             app:layout_constraintStart_toStartOf="parent">
 
-            <!-- 검색창 -->
+
+            <!-- 재생중인 파일명 -->
+            <TextView
+                android:id="@+id/playerFileName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text=""
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toTopOf="@+id/playerSeekBar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- 재생 시간 표시 -->
+            <TextView
+                android:id="@+id/playerTimeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00/0:00"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="10sp"
+                app:layout_constraintBottom_toBottomOf="@+id/playerSeekBar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/playerSeekBar" />
 
             <!-- 첫 번째 줄: 재생 위치 조정바 -->
             <SeekBar
                 android:id="@+id/playerSeekBar"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp"
+                app:layout_constraintEnd_toEndOf="@+id/playerFileName"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/searchEditText" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <!-- 두 번째 줄: 체크박스, 이전곡, 일시정지, 재생, 다음곡 -->
             <LinearLayout

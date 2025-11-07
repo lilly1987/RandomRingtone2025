@@ -86,12 +86,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var playerPauseButton: ImageButton
     private lateinit var playerPlayButton: ImageButton
     private lateinit var playerNextButton: ImageButton
+    private lateinit var playerFileName: TextView
+    private lateinit var playerTimeText: TextView
     private val uiHandler = Handler(Looper.getMainLooper())
     private var isSeekBarUserDragging = false
     private val progressUpdater = object : Runnable {
         override fun run() {
             if (mediaPlayer != null && !isSeekBarUserDragging) {
                 updateSeekBar()
+                updateTimeText()
                 // 재생 중인 항목의 진행률 업데이트
                 folderAdapter.notifyDataSetChanged()
                 uiHandler.postDelayed(this, 500)
@@ -276,6 +279,8 @@ class MainActivity : AppCompatActivity() {
         playerPauseButton = findViewById(R.id.playerPauseButton)
         playerPlayButton = findViewById(R.id.playerPlayButton)
         playerNextButton = findViewById(R.id.playerNextButton)
+        playerFileName = findViewById(R.id.playerFileName)
+        playerTimeText = findViewById(R.id.playerTimeText)
         
         setupPlayerControls()
 
@@ -856,7 +861,7 @@ class MainActivity : AppCompatActivity() {
         val displayName = getDisplayName(currentlyPlayingUri!!)
         val position = displayList.indexOf(displayName)
         if (position >= 0) {
-            folderListView.smoothScrollToPosition(position)
+            folderListView.setSelection(position)
         }
     }
     
@@ -890,6 +895,9 @@ class MainActivity : AppCompatActivity() {
         val uri = playQueue[currentPlayIndex]
         currentlyPlayingUri = uri
         
+        // 파일명 업데이트
+        playerFileName.text = getDisplayName(uri)
+        
         // 체크박스 상태 업데이트
         playerCheckBox.isChecked = getCurrentPersistentSelected().contains(uri)
         
@@ -910,6 +918,7 @@ class MainActivity : AppCompatActivity() {
                 it.start()
                 updatePlayPauseButtons()
                 updateSeekBar()
+                updateTimeText()
                 startProgressUpdater()
                 // 재생 중인 항목 강조를 위해 adapter 업데이트
                 folderAdapter.notifyDataSetChanged()
@@ -942,6 +951,19 @@ class MainActivity : AppCompatActivity() {
         if (duration > 0) {
             playerSeekBar.max = 100
             playerSeekBar.progress = (position * 100 / duration)
+        }
+    }
+    
+    private fun updateTimeText() {
+        val player = mediaPlayer ?: return
+        val duration = player.duration
+        val position = player.currentPosition
+        if (duration > 0) {
+            val currentTime = formatDuration(position.toLong())
+            val totalTime = formatDuration(duration.toLong())
+            playerTimeText.text = "$currentTime/$totalTime"
+        } else {
+            playerTimeText.text = "0:00/0:00"
         }
     }
     
