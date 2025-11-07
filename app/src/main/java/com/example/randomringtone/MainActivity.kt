@@ -55,10 +55,13 @@ class MainActivity : AppCompatActivity() {
     private val alarmFolders = mutableListOf<Uri>()
     private val notificationFolders = mutableListOf<Uri>()
     private val displayList = mutableListOf<String>()
+    private val originalDisplayList = mutableListOf<String>()
     private lateinit var folderAdapter: FolderAdapter
     private lateinit var folderListView: ListView
     private lateinit var emptyMessageView: TextView
+    private lateinit var searchEditText: android.widget.EditText
     private lateinit var preferences: SharedPreferences
+    private var searchQuery = ""
     private var currentCategory = FolderCategory.RINGTONE
     private val deleteSelectedPositions = mutableSetOf<Int>()
     private val folderCounts = mutableMapOf<Uri, Int>()
@@ -202,6 +205,7 @@ class MainActivity : AppCompatActivity() {
 
         emptyMessageView = findViewById(R.id.emptyMessage)
         folderListView = findViewById(R.id.folderListView)
+        searchEditText = findViewById(R.id.searchEditText)
 
         folderAdapter = FolderAdapter()
         folderListView.adapter = folderAdapter
@@ -209,6 +213,8 @@ class MainActivity : AppCompatActivity() {
             showDeleteDialog(position)
             true
         }
+
+        setupSearchFilter()
 
         val tabLayout = findViewById<TabLayout>(R.id.categoryTabs)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
@@ -256,15 +262,15 @@ class MainActivity : AppCompatActivity() {
                     .setMessage(getString(R.string.delete_selected_message, count))
                     .setPositiveButton(R.string.delete_folder_confirm) { _, _ ->
                         val currentList = getCurrentFolderList()
-                        val sorted = deleteSelectedPositions.toList().sortedDescending()
-                        for (pos in sorted) {
-                            if (pos in currentList.indices) {
-                                val removed = currentList.removeAt(pos)
-                                if (removed == currentlyPlayingUri) {
-                                    mediaPlayer?.release()
-                                    mediaPlayer = null
-                                    currentlyPlayingUri = null
-                                }
+                        val urisToRemove = deleteSelectedPositions.mapNotNull { pos ->
+                            getUriForDisplayPosition(pos)
+                        }
+                        for (uri in urisToRemove) {
+                            currentList.remove(uri)
+                            if (uri == currentlyPlayingUri) {
+                                mediaPlayer?.release()
+                                mediaPlayer = null
+                                currentlyPlayingUri = null
                             }
                         }
                         deleteSelectedPositions.clear()
@@ -332,13 +338,47 @@ class MainActivity : AppCompatActivity() {
     private fun updateDisplayList() {
         val currentList = getCurrentFolderList()
         validateAndRemoveInvalidUris(currentList)
-        displayList.clear()
-        currentList.forEach { displayList.add(getDisplayName(it)) }
+        originalDisplayList.clear()
+        currentList.forEach { originalDisplayList.add(getDisplayName(it)) }
+        applySearchFilter()
         deleteSelectedPositions.clear()
         selectionMode = false
         folderAdapter.notifyDataSetChanged()
         updateEmptyState()
         refreshCountsForCurrentCategory()
+    }
+
+    private fun setupSearchFilter() {
+        searchEditText.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                searchQuery = s?.toString()?.lowercase() ?: ""
+                applySearchFilter()
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+    }
+
+    private fun applySearchFilter() {
+        displayList.clear()
+        if (searchQuery.isEmpty()) {
+            displayList.addAll(originalDisplayList)
+        } else {
+            originalDisplayList.forEach { name ->
+                if (name.lowercase().contains(searchQuery)) {
+                    displayList.add(name)
+                }
+            }
+        }
+        folderAdapter.notifyDataSetChanged()
+        updateEmptyState()
+    }
+
+    private fun getUriForDisplayPosition(position: Int): Uri? {
+        if (position !in displayList.indices) return null
+        val displayName = displayList[position]
+        val currentList = getCurrentFolderList()
+        return currentList.find { getDisplayName(it) == displayName }
     }
 
     private fun getDisplayName(uri: Uri): String = uri.lastPathSegment ?: uri.toString()
@@ -385,16 +425,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showDeleteDialog(position: Int) {
+        val uri = getUriForDisplayPosition(position) ?: return
         val currentList = getCurrentFolderList()
-        if (position !in currentList.indices) return
-
         val folderName = displayList.getOrNull(position) ?: getString(R.string.delete_confirmation_default)
 
         AlertDialog.Builder(this)
             .setTitle(R.string.delete_folder_title)
             .setMessage(getString(R.string.delete_folder_message, folderName))
             .setPositiveButton(R.string.delete_folder_confirm) { _, _ ->
-                currentList.removeAt(position)
+                currentList.remove(uri)
                 updateDisplayList()
                 persistFolders()
             }
@@ -428,7 +467,7 @@ class MainActivity : AppCompatActivity() {
             titleView.text = displayList[position]
 
             checkBox.setOnCheckedChangeListener(null)
-            val rowUriForCheck = getCurrentFolderList().getOrNull(position)
+            val rowUriForCheck = getUriForDisplayPosition(position)
             if (selectionMode) {
                 checkBox.isChecked = deleteSelectedPositions.contains(position)
             } else {
@@ -451,7 +490,7 @@ class MainActivity : AppCompatActivity() {
                     val newChecked = !checkBox.isChecked
                     checkBox.isChecked = newChecked
                 } else {
-                    val uri = getCurrentFolderList().getOrNull(position)
+                    val uri = getUriForDisplayPosition(position)
                     uri?.let { handleItemClickPlayback(it) }
                 }
             }
@@ -463,7 +502,7 @@ class MainActivity : AppCompatActivity() {
                 } else false
             }
 
-            val uri = getCurrentFolderList().getOrNull(position)
+            val uri = getUriForDisplayPosition(position)
             if (uri != null) {
                 val asTree = DocumentFile.fromTreeUri(context, uri)
                 val asSingle = DocumentFile.fromSingleUri(context, uri)
