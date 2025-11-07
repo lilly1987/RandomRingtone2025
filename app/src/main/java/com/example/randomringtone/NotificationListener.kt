@@ -12,14 +12,12 @@ import org.json.JSONArray
 class NotificationListener : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
-        // 알림이 소리를 재생하는 경우에만 알림 소리 변경
-        val notification = sbn.notification
-        // 알림에 소리가 있거나, 기본 알림 소리를 사용하는 경우 변경
-        if (notification.sound != null || notification.defaults and android.app.Notification.DEFAULT_SOUND != 0) {
-            Thread {
-                updateNotificationRingtone()
-            }.start()
-        }
+        // 모든 알림에 대해 즉시 소리 변경 (알림이 재생되기 전에)
+        // 알림이 올 때마다 즉시 소리를 변경하여 바꾼 알림음이 재생되도록 함
+        Thread {
+            // 지연 없이 즉시 소리 변경
+            updateNotificationRingtone()
+        }.start()
     }
 
     private fun getRandomAudioFileFromUri(uri: Uri): Uri? {
@@ -81,8 +79,20 @@ class NotificationListener : NotificationListenerService() {
                 }
             }
             
-            // 알림 소리 변경
+            // 알림 소리 변경 - 모든 알림 타입에 대해 처리
+            // 알림이 재생되기 전에 소리를 변경하기 위해 최대한 빠르게 처리
+            // 1. 기본 알림 소리 변경 (가장 먼저)
             val result = Settings.System.putString(contentResolver, Settings.System.NOTIFICATION_SOUND, audioUri.toString())
+            
+            // 2. SMS 알림 소리도 변경 시도 (Android 8.0 이상에서는 채널별로 관리되지만, 기본값은 변경 가능)
+            try {
+                // SMS 알림 소리도 변경 시도 (모든 Android 버전에서 시도)
+                Settings.System.putString(contentResolver, "sms_notification_sound", audioUri.toString())
+            } catch (e: Exception) {
+                // SMS 알림 소리 변경 실패 시 무시
+                android.util.Log.w("NotificationListener", "Failed to update SMS notification sound", e)
+            }
+            
             if (result) {
                 android.util.Log.d("NotificationListener", "Notification sound updated: $audioUri")
             } else {
