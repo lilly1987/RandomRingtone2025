@@ -123,6 +123,17 @@ class MainActivity : AppCompatActivity() {
             importDataFromFile(it)
         }
     }
+    private val openPlaylistLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            try {
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) { }
+            loadPlaylistFromFile(it)
+        }
+    }
     private val openFolderAllFilesLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let {
             val category = pendingFolderCategory ?: currentCategory
@@ -140,26 +151,42 @@ class MainActivity : AppCompatActivity() {
                 if (root != null) {
                     collectAudioUris(root, addedUris)
                 }
-                if (addedUris.isNotEmpty()) {
+                val totalCount = addedUris.size
+                if (totalCount > 0) {
                     val targetList = when (category) {
                         FolderCategory.RINGTONE -> ringtoneFolders
                         FolderCategory.ALARM -> alarmFolders
                         FolderCategory.NOTIFICATION -> notificationFolders
                     }
                     var changed = false
+                    var completedCount = 0
                     for (fileUri in addedUris) {
                         if (targetList.none { saved -> saved == fileUri }) {
                             targetList.add(fileUri)
                             changed = true
                         }
+                        completedCount++
+                        runOnUiThread {
+                            loadingMessageView.text = getString(R.string.adding_items) + " " + getString(R.string.adding_progress, completedCount, totalCount)
+                            loadingMessageView.visibility = View.VISIBLE
+                        }
                     }
                     if (changed) {
                         runOnUiThread {
+                            loadingMessageView.visibility = View.GONE
                             if (category == currentCategory) {
                                 updateDisplayList()
                             }
                             persistFolders()
                         }
+                    } else {
+                        runOnUiThread {
+                            loadingMessageView.visibility = View.GONE
+                        }
+                    }
+                } else {
+                    runOnUiThread {
+                        loadingMessageView.visibility = View.GONE
                     }
                 }
             }.start()
@@ -169,23 +196,36 @@ class MainActivity : AppCompatActivity() {
     private val openFilesLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNullOrEmpty()) return@registerForActivityResult
         val currentList = getCurrentFolderList()
+        val totalCount = uris.size
+        var completedCount = 0
         var added = false
-        for (uri in uris) {
-            try {
-                contentResolver.takePersistableUriPermission(
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                )
-            } catch (_: SecurityException) { }
-            if (currentList.none { it == uri }) {
-                currentList.add(uri)
-                added = true
+        
+        Thread {
+            for (uri in uris) {
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    )
+                } catch (_: SecurityException) { }
+                if (currentList.none { it == uri }) {
+                    currentList.add(uri)
+                    added = true
+                }
+                completedCount++
+                runOnUiThread {
+                    loadingMessageView.text = getString(R.string.adding_items) + " " + getString(R.string.adding_progress, completedCount, totalCount)
+                    loadingMessageView.visibility = View.VISIBLE
+                }
             }
-        }
-        if (added) {
-            updateDisplayList()
-            persistFolders()
-        }
+            runOnUiThread {
+                loadingMessageView.visibility = View.GONE
+                if (added) {
+                    updateDisplayList()
+                    persistFolders()
+                }
+            }
+        }.start()
     }
 
     private val openFolderLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
@@ -201,9 +241,12 @@ class MainActivity : AppCompatActivity() {
 
             val currentList = getCurrentFolderList()
             if (currentList.none { saved -> saved == it }) {
+                loadingMessageView.text = getString(R.string.adding_items) + " 1/1"
+                loadingMessageView.visibility = View.VISIBLE
                 currentList.add(it)
                 updateDisplayList()
                 persistFolders()
+                loadingMessageView.visibility = View.GONE
             }
         }
     }
@@ -874,15 +917,8 @@ class MainActivity : AppCompatActivity() {
                 scrollToPlayingItem()
             }
             setOnCompletionListener {
-                // 다음 곡 자동 재생
-                if (playQueue.size > 1) {
-                    currentPlayIndex = (currentPlayIndex + 1) % playQueue.size
-                    playCurrentTrack()
-                } else {
-                    stopProgressUpdater()
-                    updatePlayPauseButtons()
-                    folderAdapter.notifyDataSetChanged()
-                }
+                // 다음 항목 자동 재생
+                playNextItem()
             }
             setOnErrorListener { _, what, extra ->
                 stopProgressUpdater()
@@ -1296,7 +1332,7 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val navRecyclerView = findViewById<RecyclerView>(R.id.navRecyclerView)
         
-        val menuItems = listOf(getString(R.string.export), getString(R.string.import1), getString(R.string.manual))
+        val menuItems = listOf(getString(R.string.export), getString(R.string.import1), getString(R.string.load_playlist), getString(R.string.manual))
         val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.nav_drawer_item, parent, false)
@@ -1310,7 +1346,8 @@ class MainActivity : AppCompatActivity() {
                     when (position) {
                         0 -> createDocumentLauncher.launch("RandomRingtone_backup.json")
                         1 -> openDocumentLauncher.launch(arrayOf("application/json", "*/*"))
-                        2 -> {
+                        2 -> openPlaylistLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                        3 -> {
                             val intent = Intent(this@MainActivity, ManualActivity::class.java)
                             startActivity(intent)
                         }
@@ -1472,6 +1509,44 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, R.string.import_invalid_file, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun loadPlaylistFromFile(uri: Uri) {
+        try {
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                val jsonString = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                val json = JSONObject(jsonString)
+                
+                // 재생목록은 URI 배열로 저장됨
+                val playlistArray = json.optJSONArray("playlist") ?: json.optJSONArray("uris")
+                if (playlistArray != null) {
+                    playQueue.clear()
+                    for (i in 0 until playlistArray.length()) {
+                        val uriString = playlistArray.optString(i, null)
+                        if (uriString != null) {
+                            try {
+                                val playlistUri = Uri.parse(uriString)
+                                playQueue.add(playlistUri)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                    if (playQueue.isNotEmpty()) {
+                        currentPlayIndex = 0
+                        playCurrentTrack()
+                        Toast.makeText(this, "재생목록 ${playQueue.size}개 항목 불러오기 완료", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "재생목록이 비어있습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, "유효하지 않은 재생목록 파일입니다.", Toast.LENGTH_SHORT).show()
+                }
+            } ?: run {
+                Toast.makeText(this, "파일을 읽을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "재생목록 불러오기 실패", Toast.LENGTH_SHORT).show()
         }
     }
 }

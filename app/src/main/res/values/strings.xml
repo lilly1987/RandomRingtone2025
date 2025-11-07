@@ -39,4 +39,7 @@
     <string name="pause">일시정지</string>
     <string name="previous">이전곡</string>
     <string name="next">다음곡</string>
+    <string name="load_playlist">재생목록 불러오기</string>
+    <string name="adding_items">항목 추가 중...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
 </resources>
