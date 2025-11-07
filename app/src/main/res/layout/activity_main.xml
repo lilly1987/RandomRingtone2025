@@ -16,8 +16,6 @@
         android:id="@+id/menuButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/menu"
         android:src="@drawable/ic_menu"
@@ -60,25 +58,37 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
 
-    <ListView
-        android:id="@+id/folderListView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="16dp"
-        android:scrollbars="vertical"
-        android:fadeScrollbars="false"
-        android:fastScrollEnabled="true"
+    <TextView
+        android:id="@+id/loadingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/loading"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/searchEditText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
 
+    <ListView
+        android:id="@+id/folderListView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="0dp"
+        android:fadeScrollbars="false"
+        android:fastScrollEnabled="true"
+        android:scrollbars="vertical"
+        app:layout_constraintBottom_toTopOf="@id/searchEditText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/categoryTabs"
+        app:layout_constraintVertical_bias="0.727" />
+
     <EditText
         android:id="@+id/searchEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="80dp"
+        android:layout_marginEnd="80dp"
         android:layout_marginBottom="16dp"
         android:hint="@string/search_hint"
         android:inputType="text"
@@ -92,36 +102,43 @@
         app:layout_constraintStart_toEndOf="@id/deleteSelectedButton"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- 일반 모드: 우측 하단 추가 버튼 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addFolderButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_margin="8dp"
         android:contentDescription="@string/add_folder"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_add"
         app:tint="@android:color/white" />
 
+    <!-- 일반 모드: 좌측 하단 휴지통 버튼 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/deleteSelectedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
         android:contentDescription="@string/delete_selected"
         android:visibility="gone"
+        app:backgroundTint="#F44336"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/ic_delete"
         app:tint="@android:color/white" />
 
+    <!-- 삭제 모드: 우측 하단 취소 버튼 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/cancelSelectionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
         android:contentDescription="@string/cancel_selection"
         android:visibility="gone"
+        app:backgroundTint="#F44336"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_close"

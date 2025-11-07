@@ -16,8 +16,8 @@
         android:orientation="horizontal"
         android:minHeight="48dp"
         android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp">
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp">
 
         <CheckBox
             android:id="@+id/checkBox"
@@ -25,13 +25,13 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="0dp"
             android:layout_marginEnd="0dp"
-            android:paddingStart="0dp"
-            android:paddingEnd="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:longClickable="false" />
+            android:longClickable="false"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp" />
 
         <TextView
             android:id="@+id/text1"

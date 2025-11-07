@@ -59,9 +59,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var folderAdapter: FolderAdapter
     private lateinit var folderListView: ListView
     private lateinit var emptyMessageView: TextView
+    private lateinit var loadingMessageView: TextView
     private lateinit var searchEditText: android.widget.EditText
     private lateinit var preferences: SharedPreferences
     private var searchQuery = ""
+    private val categoryLoaded = mutableSetOf<FolderCategory>()
     private var currentCategory = FolderCategory.RINGTONE
     private val deleteSelectedPositions = mutableSetOf<Int>()
     private val folderCounts = mutableMapOf<Uri, Int>()
@@ -204,6 +206,7 @@ class MainActivity : AppCompatActivity() {
         preferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
 
         emptyMessageView = findViewById(R.id.emptyMessage)
+        loadingMessageView = findViewById(R.id.loadingMessage)
         folderListView = findViewById(R.id.folderListView)
         searchEditText = findViewById(R.id.searchEditText)
 
@@ -224,7 +227,14 @@ class MainActivity : AppCompatActivity() {
                     1 -> FolderCategory.ALARM
                     else -> FolderCategory.NOTIFICATION
                 }
-                updateDisplayList()
+                // 이미 로드된 카테고리는 즉시 표시
+                if (categoryLoaded.contains(currentCategory)) {
+                    updateDisplayList()
+                } else {
+                    // 데이터는 이미 로드되어 있으므로 즉시 표시 (로딩 표시 없음)
+                    categoryLoaded.add(currentCategory)
+                    updateDisplayList()
+                }
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) = Unit
@@ -236,8 +246,21 @@ class MainActivity : AppCompatActivity() {
 
         tabLayout.getTabAt(0)?.select()
 
-        restoreFolders()
-        restorePersistentSelections()
+        // 초기 로딩은 비동기로 처리
+        loadingMessageView.visibility = View.VISIBLE
+        folderListView.visibility = View.GONE
+        emptyMessageView.visibility = View.GONE
+        
+        Thread {
+            restoreFolders()
+            restorePersistentSelections()
+            runOnUiThread {
+                categoryLoaded.add(currentCategory)
+                loadingMessageView.visibility = View.GONE
+                folderListView.visibility = View.VISIBLE
+                updateDisplayList()
+            }
+        }.start()
 
         setupPhoneStateListener()
         requestNotificationListenerPermission()
@@ -302,7 +325,7 @@ class MainActivity : AppCompatActivity() {
         validateAndRemoveInvalidUris(ringtoneFolders)
         validateAndRemoveInvalidUris(alarmFolders)
         validateAndRemoveInvalidUris(notificationFolders)
-        updateDisplayList()
+        // updateDisplayList()는 UI 스레드에서 호출해야 함
     }
 
     private fun persistFolders() {
@@ -319,11 +342,13 @@ class MainActivity : AppCompatActivity() {
         val addFab = findViewById<FloatingActionButton>(R.id.addFolderButton)
         val cancelFab = findViewById<FloatingActionButton>(R.id.cancelSelectionButton)
 
-        deleteFab.visibility = if (displayList.isEmpty()) View.GONE else View.VISIBLE
+        // visibility만 제어, 위치는 레이아웃에서 관리
         if (selectionMode) {
+            deleteFab.visibility = if (displayList.isEmpty()) View.GONE else View.VISIBLE
             addFab.visibility = View.GONE
             cancelFab.visibility = if (displayList.isEmpty()) View.GONE else View.VISIBLE
         } else {
+            deleteFab.visibility = if (displayList.isEmpty()) View.GONE else View.VISIBLE
             addFab.visibility = View.VISIBLE
             cancelFab.visibility = View.GONE
         }
@@ -345,7 +370,14 @@ class MainActivity : AppCompatActivity() {
         selectionMode = false
         folderAdapter.notifyDataSetChanged()
         updateEmptyState()
-        refreshCountsForCurrentCategory()
+        // 카운트는 이미 로드된 경우에만 새로고침
+        if (categoryLoaded.contains(currentCategory)) {
+            refreshCountsForCurrentCategory()
+        } else {
+            // 처음 로드하는 경우에만 카운트 새로고침
+            categoryLoaded.add(currentCategory)
+            refreshCountsForCurrentCategory()
+        }
     }
 
     private fun setupSearchFilter() {
@@ -552,14 +584,14 @@ class MainActivity : AppCompatActivity() {
             // 좌우 드래그로 재생 위치 탐색 (재생 중 해당 파일에만)
             view.setOnTouchListener { v, event ->
                 if (selectionMode) return@setOnTouchListener false
-                val rowUri = getCurrentFolderList().getOrNull(position)
+                val rowUri = getUriForDisplayPosition(position)
                 if (rowUri == null || rowUri != currentlyPlayingUri || mediaPlayer == null) return@setOnTouchListener false
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         val player = mediaPlayer ?: return@setOnTouchListener false
                         view.setTag(R.id.itemRoot, event.x) // 시작 X 위치
                         view.setTag(R.id.textCount, player.currentPosition) // 시작 재생 위치
-                        false
+                        true
                     }
                     MotionEvent.ACTION_MOVE -> {
                         val startX = (view.getTag(R.id.itemRoot) as? Float) ?: return@setOnTouchListener false
@@ -576,6 +608,7 @@ class MainActivity : AppCompatActivity() {
                         val newPos = (startPos + seekOffset).coerceIn(0, duration)
                         
                         player.seekTo(newPos)
+                        // 실시간 업데이트를 위해 즉시 UI 갱신
                         folderAdapter.notifyDataSetChanged()
                         return@setOnTouchListener true
                     }
@@ -1000,7 +1033,7 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val navRecyclerView = findViewById<RecyclerView>(R.id.navRecyclerView)
         
-        val menuItems = listOf(getString(R.string.export), getString(R.string.import1))
+        val menuItems = listOf(getString(R.string.export), getString(R.string.import1), getString(R.string.manual))
         val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.nav_drawer_item, parent, false)
@@ -1014,6 +1047,10 @@ class MainActivity : AppCompatActivity() {
                     when (position) {
                         0 -> createDocumentLauncher.launch("RandomRingtone_backup.json")
                         1 -> openDocumentLauncher.launch(arrayOf("application/json", "*/*"))
+                        2 -> {
+                            val intent = Intent(this@MainActivity, ManualActivity::class.java)
+                            startActivity(intent)
+                        }
                     }
                     drawerLayout.closeDrawer(GravityCompat.START)
                 }
