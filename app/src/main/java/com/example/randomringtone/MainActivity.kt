@@ -807,6 +807,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    private fun scrollToPlayingItem() {
+        if (currentlyPlayingUri == null) return
+        
+        val displayName = getDisplayName(currentlyPlayingUri!!)
+        val position = displayList.indexOf(displayName)
+        if (position >= 0) {
+            folderListView.smoothScrollToPosition(position)
+        }
+    }
+    
     private fun playNextItem() {
         if (currentlyPlayingUri == null) return
         
@@ -860,6 +870,8 @@ class MainActivity : AppCompatActivity() {
                 startProgressUpdater()
                 // 재생 중인 항목 강조를 위해 adapter 업데이트
                 folderAdapter.notifyDataSetChanged()
+                // 플레이 중인 항목으로 자동 스크롤
+                scrollToPlayingItem()
             }
             setOnCompletionListener {
                 // 다음 곡 자동 재생
@@ -883,6 +895,8 @@ class MainActivity : AppCompatActivity() {
         
         // 재생 중인 항목 강조를 위해 adapter 업데이트
         folderAdapter.notifyDataSetChanged()
+        // 플레이 중인 항목으로 자동 스크롤
+        scrollToPlayingItem()
     }
     
     private fun updateSeekBar() {
