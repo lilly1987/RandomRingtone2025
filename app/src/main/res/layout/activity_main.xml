@@ -77,11 +77,10 @@
         android:fadeScrollbars="false"
         android:fastScrollEnabled="true"
         android:scrollbars="vertical"
-        app:layout_constraintBottom_toTopOf="@id/searchEditText"
+        app:layout_constraintBottom_toTopOf="@id/playerPanel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/categoryTabs"
-        app:layout_constraintVertical_bias="0.727" />
+        app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
 
     <EditText
         android:id="@+id/searchEditText"
@@ -89,7 +88,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="80dp"
         android:layout_marginEnd="80dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:hint="@string/search_hint"
         android:inputType="text"
         android:imeOptions="actionSearch"
@@ -97,10 +96,93 @@
         android:padding="12dp"
         android:textColor="?attr/colorOnSurface"
         android:textColorHint="?attr/colorOnSurfaceVariant"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/playerPanel"
         app:layout_constraintEnd_toStartOf="@id/addFolderButton"
         app:layout_constraintStart_toEndOf="@id/deleteSelectedButton"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- 플레이어 창 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/playerPanel"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="?attr/colorSurface"
+        android:padding="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.1"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- 첫 번째 줄: 재생 위치 조정바 -->
+        <SeekBar
+            android:id="@+id/playerSeekBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- 두 번째 줄: 체크박스, 이전곡, 일시정지, 재생, 다음곡 -->
+        <LinearLayout
+            android:id="@+id/playerControlsLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/playerSeekBar">
+
+            <CheckBox
+                android:id="@+id/playerCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
+
+            <ImageButton
+                android:id="@+id/playerPreviousButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/previous"
+                android:src="@drawable/ic_skip_previous" />
+
+            <ImageButton
+                android:id="@+id/playerPauseButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/pause"
+                android:src="@drawable/ic_pause"
+                android:visibility="gone" />
+
+            <ImageButton
+                android:id="@+id/playerPlayButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/play"
+                android:src="@drawable/ic_play" />
+
+            <ImageButton
+                android:id="@+id/playerNextButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/next"
+                android:src="@drawable/ic_skip_next" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 일반 모드: 우측 하단 추가 버튼 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton

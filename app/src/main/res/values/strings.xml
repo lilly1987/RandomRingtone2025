@@ -35,4 +35,8 @@
     <string name="loading">로딩 중...</string>
     <string name="manual">설명서</string>
     <string name="manual_title">설명서</string>
+    <string name="play">재생</string>
+    <string name="pause">일시정지</string>
+    <string name="previous">이전곡</string>
+    <string name="next">다음곡</string>
 </resources>

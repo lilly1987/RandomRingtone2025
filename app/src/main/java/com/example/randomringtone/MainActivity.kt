@@ -5,18 +5,21 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.media.AudioAttributes
 import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
+import android.media.AudioAttributes
 import android.view.LayoutInflater
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
-import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.SeekBar
+import android.widget.CheckBox
+import android.widget.ImageButton
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -71,18 +74,28 @@ class MainActivity : AppCompatActivity() {
     private val ringtoneSelected = mutableSetOf<Uri>()
     private val alarmSelected = mutableSetOf<Uri>()
     private val notificationSelected = mutableSetOf<Uri>()
+    private var selectionMode = false
+    private var mediaPlayer: MediaPlayer? = null
+    private val playQueue = mutableListOf<Uri>()
+    private var currentPlayIndex = -1
+    private var currentlyPlayingUri: Uri? = null
+    private lateinit var playerPanel: ConstraintLayout
+    private lateinit var playerSeekBar: SeekBar
+    private lateinit var playerCheckBox: CheckBox
+    private lateinit var playerPreviousButton: ImageButton
+    private lateinit var playerPauseButton: ImageButton
+    private lateinit var playerPlayButton: ImageButton
+    private lateinit var playerNextButton: ImageButton
     private val uiHandler = Handler(Looper.getMainLooper())
+    private var isSeekBarUserDragging = false
     private val progressUpdater = object : Runnable {
         override fun run() {
-            if (mediaPlayer != null) {
-                folderAdapter.notifyDataSetChanged()
+            if (mediaPlayer != null && !isSeekBarUserDragging) {
+                updateSeekBar()
                 uiHandler.postDelayed(this, 500)
             }
         }
     }
-    private var selectionMode = false
-    private var mediaPlayer: MediaPlayer? = null
-    private var currentlyPlayingUri: Uri? = null
     private var telephonyManager: TelephonyManager? = null
     private var phoneStateListener: PhoneStateListener? = null
     private var pendingFolderCategory: FolderCategory? = null
@@ -209,6 +222,17 @@ class MainActivity : AppCompatActivity() {
         loadingMessageView = findViewById(R.id.loadingMessage)
         folderListView = findViewById(R.id.folderListView)
         searchEditText = findViewById(R.id.searchEditText)
+        
+        // 플레이어 창 초기화
+        playerPanel = findViewById(R.id.playerPanel)
+        playerSeekBar = findViewById(R.id.playerSeekBar)
+        playerCheckBox = findViewById(R.id.playerCheckBox)
+        playerPreviousButton = findViewById(R.id.playerPreviousButton)
+        playerPauseButton = findViewById(R.id.playerPauseButton)
+        playerPlayButton = findViewById(R.id.playerPlayButton)
+        playerNextButton = findViewById(R.id.playerNextButton)
+        
+        setupPlayerControls()
 
         folderAdapter = FolderAdapter()
         folderListView.adapter = folderAdapter
@@ -290,11 +314,6 @@ class MainActivity : AppCompatActivity() {
                         }
                         for (uri in urisToRemove) {
                             currentList.remove(uri)
-                            if (uri == currentlyPlayingUri) {
-                                mediaPlayer?.release()
-                                mediaPlayer = null
-                                currentlyPlayingUri = null
-                            }
                         }
                         deleteSelectedPositions.clear()
                         selectionMode = false
@@ -334,6 +353,7 @@ class MainActivity : AppCompatActivity() {
             .putString(KEY_ALARM_FOLDERS, serializeFolders(alarmFolders))
             .putString(KEY_NOTIFICATION_FOLDERS, serializeFolders(notificationFolders))
             .apply()
+        updateTabCounts()
     }
 
     private fun updateEmptyState() {
@@ -370,6 +390,7 @@ class MainActivity : AppCompatActivity() {
         selectionMode = false
         folderAdapter.notifyDataSetChanged()
         updateEmptyState()
+        updateTabCounts()
         // 카운트는 이미 로드된 경우에만 새로고침
         if (categoryLoaded.contains(currentCategory)) {
             refreshCountsForCurrentCategory()
@@ -378,6 +399,17 @@ class MainActivity : AppCompatActivity() {
             categoryLoaded.add(currentCategory)
             refreshCountsForCurrentCategory()
         }
+    }
+    
+    private fun updateTabCounts() {
+        val tabLayout = findViewById<TabLayout>(R.id.categoryTabs)
+        val ringtoneCount = ringtoneFolders.size
+        val alarmCount = alarmFolders.size
+        val notificationCount = notificationFolders.size
+        
+        tabLayout.getTabAt(0)?.text = getString(R.string.tab_ringtone) + if (ringtoneCount > 0) " ($ringtoneCount)" else ""
+        tabLayout.getTabAt(1)?.text = getString(R.string.tab_alarm) + if (alarmCount > 0) " ($alarmCount)" else ""
+        tabLayout.getTabAt(2)?.text = getString(R.string.tab_notification) + if (notificationCount > 0) " ($notificationCount)" else ""
     }
 
     private fun setupSearchFilter() {
@@ -542,27 +574,11 @@ class MainActivity : AppCompatActivity() {
                     asSingle != null && asSingle.isFile -> {
                         val duration = fileDurationsMs[uri]
                         countView.text = duration?.let { formatDuration(it) } ?: "…"
-                        // 진행도 및 테두리
-                        if (uri == currentlyPlayingUri && mediaPlayer != null) {
-                            val player = mediaPlayer!!
-                            val dur = player.duration.takeIf { it > 0 } ?: 0
-                            val pos = player.currentPosition
-                            val ratio = if (dur > 0) pos.toFloat() / dur.toFloat() else 0f
-                            container.background = resources.getDrawable(R.drawable.bg_playing_border, context.theme)
-                            view.post {
-                                val total = view.width
-                                val width = (total * ratio).toInt().coerceIn(0, total)
-                                val lp = progress.layoutParams
-                                lp.width = width
-                                progress.layoutParams = lp
-                            }
-                        } else {
-                            container.background = null
-                            view.post {
-                                val lp = progress.layoutParams
-                                lp.width = 0
-                                progress.layoutParams = lp
-                            }
+                        container.background = null
+                        view.post {
+                            val lp = progress.layoutParams
+                            lp.width = 0
+                            progress.layoutParams = lp
                         }
                     }
                     asTree != null && asTree.isDirectory -> {
@@ -581,61 +597,113 @@ class MainActivity : AppCompatActivity() {
                 countView.text = "…"
             }
 
-            // 좌우 드래그로 재생 위치 탐색 (재생 중 해당 파일에만)
-            view.setOnTouchListener { v, event ->
-                if (selectionMode) return@setOnTouchListener false
-                val rowUri = getUriForDisplayPosition(position)
-                if (rowUri == null || rowUri != currentlyPlayingUri || mediaPlayer == null) return@setOnTouchListener false
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> {
-                        val player = mediaPlayer ?: return@setOnTouchListener false
-                        view.setTag(R.id.itemRoot, event.x) // 시작 X 위치
-                        view.setTag(R.id.textCount, player.currentPosition) // 시작 재생 위치
-                        true
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        val startX = (view.getTag(R.id.itemRoot) as? Float) ?: return@setOnTouchListener false
-                        val startPos = (view.getTag(R.id.textCount) as? Int) ?: return@setOnTouchListener false
-                        val player = mediaPlayer ?: return@setOnTouchListener false
-                        val duration = player.duration
-                        if (duration <= 0) return@setOnTouchListener false
-                        
-                        val viewWidth = view.width.toFloat().coerceAtLeast(1f)
-                        val dx = event.x - startX
-                        val seekRatio = (dx / viewWidth).coerceIn(-0.5f, 0.5f) // 최대 ±50%
-                        val maxSeekRange = duration / 2
-                        val seekOffset = (seekRatio * maxSeekRange).toInt()
-                        val newPos = (startPos + seekOffset).coerceIn(0, duration)
-                        
-                        player.seekTo(newPos)
-                        // 실시간 업데이트를 위해 즉시 UI 갱신
-                        folderAdapter.notifyDataSetChanged()
-                        return@setOnTouchListener true
-                    }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        false
-                    }
-                    else -> false
-                }
-            }
 
             return view
         }
     }
 
     private fun handleItemClickPlayback(uri: Uri) {
-        // 파일만 재생. 폴더(tree) URI는 무시
-        val single = androidx.documentfile.provider.DocumentFile.fromSingleUri(this, uri)
-        if (single == null || !single.isFile) return
-
-        if (currentlyPlayingUri == uri) {
-            val mp = mediaPlayer
-            if (mp != null) {
-                if (mp.isPlaying) mp.pause() else mp.start()
-                return
+        val asTree = DocumentFile.fromTreeUri(this, uri)
+        val asSingle = DocumentFile.fromSingleUri(this, uri)
+        
+        if (asTree != null && asTree.isDirectory) {
+            // 폴더인 경우: 폴더 안의 모든 음악 파일을 수집하여 재생 목록에 추가
+            Thread {
+                val audioFiles = mutableListOf<Uri>()
+                collectAudioUris(asTree, audioFiles)
+                if (audioFiles.isNotEmpty()) {
+                    runOnUiThread {
+                        playQueue.clear()
+                        playQueue.addAll(audioFiles)
+                        currentPlayIndex = 0
+                        playCurrentTrack()
+                    }
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(this, "폴더에 음악 파일이 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }.start()
+        } else if (asSingle != null && asSingle.isFile) {
+            // 파일인 경우: 재생 목록에 추가하고 재생
+            playQueue.clear()
+            playQueue.add(uri)
+            currentPlayIndex = 0
+            playCurrentTrack()
+        }
+    }
+    
+    private fun setupPlayerControls() {
+        playerSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser && mediaPlayer != null) {
+                    val duration = mediaPlayer!!.duration
+                    if (duration > 0) {
+                        val position = (progress * duration / 100)
+                        mediaPlayer!!.seekTo(position)
+                    }
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                isSeekBarUserDragging = true
+            }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                isSeekBarUserDragging = false
+            }
+        })
+        
+        playerCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            if (currentlyPlayingUri != null) {
+                val set = getCurrentPersistentSelected()
+                if (isChecked) {
+                    set.add(currentlyPlayingUri!!)
+                } else {
+                    set.remove(currentlyPlayingUri!!)
+                }
+                persistPersistentSelections()
             }
         }
-
+        
+        playerPlayButton.setOnClickListener {
+            if (mediaPlayer != null) {
+                mediaPlayer!!.start()
+                updatePlayPauseButtons()
+                startProgressUpdater()
+            }
+        }
+        
+        playerPauseButton.setOnClickListener {
+            if (mediaPlayer != null) {
+                mediaPlayer!!.pause()
+                updatePlayPauseButtons()
+                stopProgressUpdater()
+            }
+        }
+        
+        playerPreviousButton.setOnClickListener {
+            if (playQueue.isNotEmpty()) {
+                currentPlayIndex = (currentPlayIndex - 1 + playQueue.size) % playQueue.size
+                playCurrentTrack()
+            }
+        }
+        
+        playerNextButton.setOnClickListener {
+            if (playQueue.isNotEmpty()) {
+                currentPlayIndex = (currentPlayIndex + 1) % playQueue.size
+                playCurrentTrack()
+            }
+        }
+    }
+    
+    private fun playCurrentTrack() {
+        if (currentPlayIndex < 0 || currentPlayIndex >= playQueue.size) return
+        
+        val uri = playQueue[currentPlayIndex]
+        currentlyPlayingUri = uri
+        
+        // 체크박스 상태 업데이트
+        playerCheckBox.isChecked = getCurrentPersistentSelected().contains(uri)
+        
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
@@ -645,25 +713,65 @@ class MainActivity : AppCompatActivity() {
                     .build()
             )
             setDataSource(this@MainActivity, uri)
-            setOnPreparedListener { it.start() }
-            setOnCompletionListener { /* 재생 종료 후 특별한 동작 없음 */ }
+            setOnPreparedListener {
+                it.start()
+                updatePlayPauseButtons()
+                updateSeekBar()
+                startProgressUpdater()
+            }
+            setOnCompletionListener {
+                // 다음 곡 자동 재생
+                if (playQueue.size > 1) {
+                    currentPlayIndex = (currentPlayIndex + 1) % playQueue.size
+                    playCurrentTrack()
+                } else {
+                    stopProgressUpdater()
+                    updatePlayPauseButtons()
+                }
+            }
             prepareAsync()
         }
-        currentlyPlayingUri = uri
+        
+        playerPanel.visibility = View.VISIBLE
+    }
+    
+    private fun updateSeekBar() {
+        val player = mediaPlayer ?: return
+        val duration = player.duration
+        val position = player.currentPosition
+        if (duration > 0) {
+            playerSeekBar.max = 100
+            playerSeekBar.progress = (position * 100 / duration)
+        }
+    }
+    
+    private fun updatePlayPauseButtons() {
+        val isPlaying = mediaPlayer?.isPlaying == true
+        playerPlayButton.visibility = if (isPlaying) View.GONE else View.VISIBLE
+        playerPauseButton.visibility = if (isPlaying) View.VISIBLE else View.GONE
+    }
+    
+    private fun startProgressUpdater() {
         uiHandler.removeCallbacks(progressUpdater)
         uiHandler.post(progressUpdater)
+    }
+    
+    private fun stopProgressUpdater() {
+        uiHandler.removeCallbacks(progressUpdater)
     }
 
     override fun onStop() {
         super.onStop()
         mediaPlayer?.release()
         mediaPlayer = null
-        currentlyPlayingUri = null
-        uiHandler.removeCallbacks(progressUpdater)
+        stopProgressUpdater()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        mediaPlayer?.release()
+        mediaPlayer = null
+        stopProgressUpdater()
         removePhoneStateListener()
     }
 
@@ -818,16 +926,11 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.delete_folder_confirm) { _, _ ->
                 val currentList = getCurrentFolderList()
                 val sorted = deleteSelectedPositions.toList().sortedDescending()
-                for (pos in sorted) {
-                    if (pos in currentList.indices) {
-                        val removed = currentList.removeAt(pos)
-                        if (removed == currentlyPlayingUri) {
-                            mediaPlayer?.release()
-                            mediaPlayer = null
-                            currentlyPlayingUri = null
+                        for (pos in sorted) {
+                            if (pos in currentList.indices) {
+                                currentList.removeAt(pos)
+                            }
                         }
-                    }
-                }
                 deleteSelectedPositions.clear()
                 updateDisplayList()
                 persistFolders()
@@ -842,10 +945,6 @@ class MainActivity : AppCompatActivity() {
             .setMessage(R.string.delete_all_message)
             .setPositiveButton(R.string.delete_folder_confirm) { _, _ ->
                 val currentList = getCurrentFolderList()
-                // 재생 중인 리소스 정리
-                mediaPlayer?.release()
-                mediaPlayer = null
-                currentlyPlayingUri = null
                 currentList.clear()
                 deleteSelectedPositions.clear()
                 updateDisplayList()
