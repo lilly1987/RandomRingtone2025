@@ -26,6 +26,13 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
 import androidx.documentfile.provider.DocumentFile
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.LinearLayoutManager
+import android.widget.Toast
+import java.io.OutputStreamWriter
+import org.json.JSONObject
+import androidx.core.view.GravityCompat
 import org.json.JSONArray
 import org.json.JSONException
 import android.telephony.PhoneStateListener
@@ -74,6 +81,28 @@ class MainActivity : AppCompatActivity() {
     private var telephonyManager: TelephonyManager? = null
     private var phoneStateListener: PhoneStateListener? = null
     private var pendingFolderCategory: FolderCategory? = null
+    private val createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let {
+            try {
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) { }
+            exportDataToFile(it)
+        }
+    }
+    private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            try {
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) { }
+            importDataFromFile(it)
+        }
+    }
     private val openFolderAllFilesLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let {
             val category = pendingFolderCategory ?: currentCategory
@@ -207,8 +236,10 @@ class MainActivity : AppCompatActivity() {
         setupPhoneStateListener()
         requestNotificationListenerPermission()
 
+        setupDrawerLayout()
+
         findViewById<android.widget.ImageButton>(R.id.menuButton).setOnClickListener {
-            // 메뉴 기능은 나중에 추가 가능
+            findViewById<DrawerLayout>(R.id.drawerLayout).openDrawer(androidx.core.view.GravityCompat.START)
         }
 
         findViewById<FloatingActionButton>(R.id.addFolderButton).setOnClickListener {
@@ -925,4 +956,183 @@ class MainActivity : AppCompatActivity() {
         return String.format("%d:%02d", minutes, seconds)
     }
     private fun dpToPx(dp: Float): Float = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, dp, resources.displayMetrics)
+
+    private fun setupDrawerLayout() {
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
+        val navRecyclerView = findViewById<RecyclerView>(R.id.navRecyclerView)
+        
+        val menuItems = listOf(getString(R.string.export), getString(R.string.import1))
+        val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.nav_drawer_item, parent, false)
+                return object : RecyclerView.ViewHolder(view) {}
+            }
+
+            override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+                val textView = holder.itemView.findViewById<TextView>(R.id.navItemText)
+                textView.text = menuItems[position]
+                holder.itemView.setOnClickListener {
+                    when (position) {
+                        0 -> createDocumentLauncher.launch("RandomRingtone_backup.json")
+                        1 -> openDocumentLauncher.launch(arrayOf("application/json", "*/*"))
+                    }
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                }
+            }
+
+            override fun getItemCount() = menuItems.size
+        }
+        
+        navRecyclerView.layoutManager = LinearLayoutManager(this)
+        navRecyclerView.adapter = adapter
+    }
+
+    private fun exportDataToFile(uri: Uri) {
+        try {
+            val json = JSONObject()
+            
+            // 3개 탭의 목록 저장
+            val ringtoneArray = JSONArray()
+            ringtoneFolders.forEach { ringtoneArray.put(it.toString()) }
+            json.put("ringtoneFolders", ringtoneArray)
+            
+            val alarmArray = JSONArray()
+            alarmFolders.forEach { alarmArray.put(it.toString()) }
+            json.put("alarmFolders", alarmArray)
+            
+            val notificationArray = JSONArray()
+            notificationFolders.forEach { notificationArray.put(it.toString()) }
+            json.put("notificationFolders", notificationArray)
+            
+            // 체크박스 선택 정보 저장
+            val ringtoneSelectedArray = JSONArray()
+            ringtoneSelected.forEach { ringtoneSelectedArray.put(it.toString()) }
+            json.put("ringtoneSelected", ringtoneSelectedArray)
+            
+            val alarmSelectedArray = JSONArray()
+            alarmSelected.forEach { alarmSelectedArray.put(it.toString()) }
+            json.put("alarmSelected", alarmSelectedArray)
+            
+            val notificationSelectedArray = JSONArray()
+            notificationSelected.forEach { notificationSelectedArray.put(it.toString()) }
+            json.put("notificationSelected", notificationSelectedArray)
+            
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                OutputStreamWriter(outputStream, "UTF-8").use { writer ->
+                    writer.write(json.toString(2))
+                }
+            }
+            
+            Toast.makeText(this, R.string.export_success, Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, R.string.export_error, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun importDataFromFile(uri: Uri) {
+        try {
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                val jsonString = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                val json = JSONObject(jsonString)
+                
+                // 3개 탭의 목록 불러오기
+                ringtoneFolders.clear()
+                json.optJSONArray("ringtoneFolders")?.let { array ->
+                    for (i in 0 until array.length()) {
+                        val uriString = array.optString(i, null)
+                        if (uriString != null) {
+                            try {
+                                val folderUri = Uri.parse(uriString)
+                                ringtoneFolders.add(folderUri)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                }
+                
+                alarmFolders.clear()
+                json.optJSONArray("alarmFolders")?.let { array ->
+                    for (i in 0 until array.length()) {
+                        val uriString = array.optString(i, null)
+                        if (uriString != null) {
+                            try {
+                                val folderUri = Uri.parse(uriString)
+                                alarmFolders.add(folderUri)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                }
+                
+                notificationFolders.clear()
+                json.optJSONArray("notificationFolders")?.let { array ->
+                    for (i in 0 until array.length()) {
+                        val uriString = array.optString(i, null)
+                        if (uriString != null) {
+                            try {
+                                val folderUri = Uri.parse(uriString)
+                                notificationFolders.add(folderUri)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                }
+                
+                // 체크박스 선택 정보 불러오기
+                ringtoneSelected.clear()
+                json.optJSONArray("ringtoneSelected")?.let { array ->
+                    for (i in 0 until array.length()) {
+                        val uriString = array.optString(i, null)
+                        if (uriString != null) {
+                            try {
+                                val selectedUri = Uri.parse(uriString)
+                                ringtoneSelected.add(selectedUri)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                }
+                
+                alarmSelected.clear()
+                json.optJSONArray("alarmSelected")?.let { array ->
+                    for (i in 0 until array.length()) {
+                        val uriString = array.optString(i, null)
+                        if (uriString != null) {
+                            try {
+                                val selectedUri = Uri.parse(uriString)
+                                alarmSelected.add(selectedUri)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                }
+                
+                notificationSelected.clear()
+                json.optJSONArray("notificationSelected")?.let { array ->
+                    for (i in 0 until array.length()) {
+                        val uriString = array.optString(i, null)
+                        if (uriString != null) {
+                            try {
+                                val selectedUri = Uri.parse(uriString)
+                                notificationSelected.add(selectedUri)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                }
+                
+                // 유효하지 않은 URI 제거
+                validateAndRemoveInvalidUris(ringtoneFolders)
+                validateAndRemoveInvalidUris(alarmFolders)
+                validateAndRemoveInvalidUris(notificationFolders)
+                
+                // 데이터 저장 및 UI 업데이트
+                persistFolders()
+                persistPersistentSelections()
+                updateDisplayList()
+                
+                Toast.makeText(this, R.string.import_success, Toast.LENGTH_SHORT).show()
+            } ?: run {
+                Toast.makeText(this, R.string.import_error, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, R.string.import_invalid_file, Toast.LENGTH_SHORT).show()
+        }
+    }
 }

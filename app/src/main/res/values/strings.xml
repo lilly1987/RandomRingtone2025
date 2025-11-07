@@ -24,4 +24,11 @@
     <string name="delete_all_message">현재 탭의 모든 항목을 삭제할까요?</string>
     <string name="cancel_selection">선택 취소</string>
     <string name="menu">메뉴</string>
+    <string name="export">내보내기</string>
+    <string name="export_success">내보내기 완료</string>
+    <string name="export_error">내보내기 실패</string>
+    <string name="import1">불러오기</string>
+    <string name="import_success">불러오기 완료</string>
+    <string name="import_error">불러오기 실패</string>
+    <string name="import_invalid_file">유효하지 않은 파일입니다</string>
 </resources>
