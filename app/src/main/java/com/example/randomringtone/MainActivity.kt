@@ -51,6 +51,8 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -232,44 +234,73 @@ class MainActivity : AppCompatActivity() {
 
     private val openFilesLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNullOrEmpty()) return@registerForActivityResult
-        val currentList = getCurrentFolderList()
+        
         val totalCount = uris.size
         var completedCount = 0
-        var added = false
+        val urisToAdd = mutableListOf<Uri>()
         
         // 추가 중 표시 시작
-        runOnUiThread {
-            loadingMessageView.text = getString(R.string.adding_items)
-            loadingMessageView.visibility = View.VISIBLE
-            folderListView.visibility = View.GONE
-            emptyMessageView.visibility = View.GONE
-        }
+        loadingMessageView.text = getString(R.string.adding_items)
+        loadingMessageView.visibility = View.VISIBLE
+        folderListView.visibility = View.GONE
+        emptyMessageView.visibility = View.GONE
+        
+        // UI 스레드에서 현재 리스트 스냅샷 가져오기
+        val currentListSnapshot = getCurrentFolderList().toList()
         
         Thread {
-            for (uri in uris) {
-                try {
-                    contentResolver.takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    )
-                } catch (_: SecurityException) { }
-                if (currentList.none { it == uri }) {
-                    currentList.add(uri)
-                    added = true
+            try {
+                for (uri in uris) {
+                    try {
+                        // OpenMultipleDocuments는 일시적인 권한만 부여하므로 takePersistableUriPermission을 호출하면 안 됩니다.
+                        // 사용자가 선택한 파일은 이미 권한이 있으므로, URI를 바로 저장합니다.
+                        // 검증 없이 URI를 저장 (나중에 사용할 때 문제가 있으면 그때 처리)
+                        if (currentListSnapshot.none { it == uri }) {
+                            urisToAdd.add(uri)
+                        }
+                    } catch (e: Exception) {
+                        // 예상치 못한 오류 발생 시에도 계속 진행
+                        android.util.Log.e("MainActivity", "Unexpected error processing URI: $uri", e)
+                    }
+                    completedCount++
+                    // 진행 상황 업데이트
+                    runOnUiThread {
+                        try {
+                            loadingMessageView.text = getString(R.string.adding_items) + " " + 
+                                getString(R.string.adding_progress, completedCount, totalCount)
+                        } catch (e: Exception) {
+                            // 문자열 포맷 오류 시 기본 메시지 표시
+                            loadingMessageView.text = getString(R.string.adding_items)
+                        }
+                    }
                 }
-                completedCount++
-                // 진행 상황 업데이트
+                
+                // UI 스레드에서 리스트에 추가 (동기화 문제 방지)
                 runOnUiThread {
-                    loadingMessageView.text = getString(R.string.adding_items) + " " + 
-                        getString(R.string.adding_progress, completedCount, totalCount)
+                    try {
+                        if (urisToAdd.isNotEmpty()) {
+                            val currentList = getCurrentFolderList()
+                            for (uri in urisToAdd) {
+                                if (currentList.none { it == uri }) {
+                                    currentList.add(uri)
+                                }
+                            }
+                            updateDisplayList()
+                            persistFolders()
+                        } else {
+                            // 추가할 항목이 없으면 추가 중 표시 제거
+                            updateListViewVisibility()
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("MainActivity", "Failed to finalize file addition", e)
+                        e.printStackTrace()
+                        updateListViewVisibility()
+                    }
                 }
-            }
-            runOnUiThread {
-                if (added) {
-                    updateDisplayList()
-                    persistFolders()
-                } else {
-                    // 추가할 항목이 없으면 추가 중 표시 제거
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to process files", e)
+                e.printStackTrace()
+                runOnUiThread {
                     updateListViewVisibility()
                 }
             }
@@ -324,6 +355,9 @@ class MainActivity : AppCompatActivity() {
         autoPlayNext = preferences.getBoolean(KEY_AUTO_PLAY_NEXT, true)
         hideSearchBar = preferences.getBoolean(KEY_HIDE_SEARCH_BAR, false)
         hideFilterOptions = preferences.getBoolean(KEY_HIDE_FILTER_OPTIONS, false)
+        
+        // 시스템 수정 권한 체크
+        checkWriteSettingsPermission()
 
         emptyMessageView = findViewById(R.id.emptyMessage)
         loadingMessageView = findViewById(R.id.loadingMessage)
@@ -437,6 +471,17 @@ class MainActivity : AppCompatActivity() {
         requestNotificationListenerPermission()
 
         setupDrawerLayout()
+        
+        // BroadcastReceiver 등록 (NotificationListener에서 알림 업데이트 요청 받기)
+        val filter = IntentFilter("com.example.randomringtone.UPDATE_SOUNDS_NOTIFICATION")
+        registerReceiver(object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                updateCurrentSoundsNotification()
+            }
+        }, filter)
+        
+        // 현재 설정된 벨소리, 알람, 알림 파일명을 알림센터에 표시
+        updateCurrentSoundsNotification()
 
         val menuButton = findViewById<android.widget.ImageButton>(R.id.menuButton)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
@@ -1273,12 +1318,19 @@ class MainActivity : AppCompatActivity() {
                         } else if (rowUriForCheck != null) {
                             val set = getCurrentPersistentSelected()
                             if (isChecked) set.add(rowUriForCheck) else set.remove(rowUriForCheck)
-                            persistPersistentSelections()
-                            // 필터 모드에 따라 목록 업데이트
-                            applySearchFilter()
                             // 재생창의 체크박스와 동기화
                             if (rowUriForCheck == currentlyPlayingUri) {
                                 playerCheckBox.isChecked = isChecked
+                            }
+                            // 백그라운드에서 처리 (성능 개선)
+                            uiHandler.post {
+                                persistPersistentSelections()
+                                // 필터 모드에 따라 목록 업데이트
+                                applySearchFilter()
+                                // 탭 건수 업데이트 (지연 처리)
+                                uiHandler.postDelayed({
+                                    updateTabCounts()
+                                }, 100)
                             }
                         }
                     }
@@ -1484,11 +1536,18 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     set.remove(currentlyPlayingUri!!)
                 }
-                persistPersistentSelections()
-                // 필터 모드에 따라 목록 업데이트
-                applySearchFilter()
                 // 항목의 체크박스와 동기화
                 folderAdapter.notifyDataSetChanged()
+                // 백그라운드에서 처리 (성능 개선)
+                uiHandler.post {
+                    persistPersistentSelections()
+                    // 필터 모드에 따라 목록 업데이트
+                    applySearchFilter()
+                    // 탭 건수 업데이트 (지연 처리)
+                    uiHandler.postDelayed({
+                        updateTabCounts()
+                    }, 100)
+                }
             }
         }
         
@@ -1673,6 +1732,9 @@ class MainActivity : AppCompatActivity() {
             mainLayout?.bringChildToFront(tabLayout)
         }
         
+        // 앱이 다시 포그라운드로 돌아올 때 시스템 수정 권한 다시 체크
+        checkWriteSettingsPermission()
+        
         // 앱이 다시 포그라운드로 돌아올 때 MediaPlayer 상태와 UI 동기화
         if (mediaPlayer != null) {
             updatePlayPauseButtons()
@@ -1685,6 +1747,9 @@ class MainActivity : AppCompatActivity() {
             // 재생 중인 항목 강조 업데이트
             folderAdapter.notifyDataSetChanged()
         }
+        
+        // 알림센터에 현재 설정된 소리 정보 업데이트
+        updateCurrentSoundsNotification()
     }
 
     override fun onPause() {
@@ -1711,8 +1776,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            setupPhoneStateListener()
+        when (requestCode) {
+            100 -> {
+                // READ_PHONE_STATE 권한
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    setupPhoneStateListener()
+                }
+            }
+            200 -> {
+                // POST_NOTIFICATIONS 권한
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // 알림 권한이 부여되면 알림 표시
+                    updateCurrentSoundsNotification()
+                }
+            }
         }
     }
 
@@ -1774,6 +1851,8 @@ class MainActivity : AppCompatActivity() {
             val fileName = getAudioFileName(audioUri)
             val message = "${getString(R.string.tab_ringtone)}: $fileName"
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            // 알림센터에 현재 설정된 소리 정보 업데이트
+            updateCurrentSoundsNotification()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -1802,6 +1881,8 @@ class MainActivity : AppCompatActivity() {
                 val fileName = getAudioFileName(audioUri)
                 val message = "${getString(R.string.tab_alarm)}: $fileName"
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                // 알림센터에 현재 설정된 소리 정보 업데이트
+                updateCurrentSoundsNotification()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -1823,11 +1904,31 @@ class MainActivity : AppCompatActivity() {
             val fileName = getAudioFileName(audioUri)
             val message = "${getString(R.string.tab_notification)}: $fileName"
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            // 알림센터에 현재 설정된 소리 정보 업데이트
+            updateCurrentSoundsNotification()
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+    private fun checkWriteSettingsPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.System.canWrite(this)) {
+                // 시스템 수정 권한이 없으면 다이얼로그 표시
+                AlertDialog.Builder(this)
+                    .setTitle("시스템 수정 권한 필요")
+                    .setMessage("벨소리, 알람, 알림음을 자동으로 변경하려면 시스템 수정 권한이 필요합니다.\n설정 화면에서 'RandomRingtone'에 권한을 부여해주세요.")
+                    .setPositiveButton("설정 열기") { _, _ ->
+                        val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+                        intent.data = android.net.Uri.parse("package:$packageName")
+                        startActivity(intent)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        }
+    }
+    
     private fun requestNotificationListenerPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             val enabledListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
@@ -2413,6 +2514,75 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "재생목록 불러오기 실패", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun updateCurrentSoundsNotification() {
+        try {
+            // 알림 권한 확인 (Android 13+)
+            val notificationManager = NotificationManagerCompat.from(this)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    // 알림 권한이 없으면 요청
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 200)
+                    return
+                }
+            }
+            
+            // 알림이 비활성화되어 있으면 표시하지 않음
+            if (!notificationManager.areNotificationsEnabled()) {
+                android.util.Log.w("MainActivity", "Notifications are disabled")
+                return
+            }
+            
+            // 현재 설정된 벨소리, 알람, 알림 URI 가져오기
+            val ringtoneUri = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_RINGTONE)
+            val alarmUri = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM)
+            val notificationUri = RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_NOTIFICATION)
+            
+            // 파일명 추출
+            val ringtoneName = ringtoneUri?.let { getAudioFileName(it) } ?: "기본값"
+            val alarmName = alarmUri?.let { getAudioFileName(it) } ?: "기본값"
+            val notificationName = notificationUri?.let { getAudioFileName(it) } ?: "기본값"
+            
+            // 알림 내용 생성
+            val contentText = "${getString(R.string.tab_ringtone)}: $ringtoneName\n" +
+                             "${getString(R.string.tab_alarm)}: $alarmName\n" +
+                             "${getString(R.string.tab_notification)}: $notificationName"
+            
+            // 알림 채널 생성 (Android 8.0+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                val channel = android.app.NotificationChannel(
+                    "current_sounds_channel",
+                    "현재 설정된 소리",
+                    android.app.NotificationManager.IMPORTANCE_LOW
+                )
+                channel.description = "현재 설정된 벨소리, 알람, 알림 파일명을 표시합니다"
+                channel.enableLights(false)
+                channel.enableVibration(false)
+                channel.setSound(null, null)
+                channel.setShowBadge(false)
+                manager.createNotificationChannel(channel)
+            }
+            
+            // 알림 생성
+            val notification = NotificationCompat.Builder(this, "current_sounds_channel")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("현재 설정된 소리")
+                .setContentText(contentText)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setAutoCancel(false)
+                .setShowWhen(false)
+                .build()
+            
+            // 알림 표시
+            notificationManager.notify(1, notification)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to show notification", e)
+            e.printStackTrace()
         }
     }
 }
