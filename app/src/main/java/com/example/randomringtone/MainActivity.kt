@@ -76,6 +76,9 @@ class MainActivity : AppCompatActivity() {
     private val notificationSelected = mutableSetOf<Uri>()
     private var selectionMode = false
     private var mediaPlayer: MediaPlayer? = null
+    private var autoScrollOnTrackChange = true
+    private var autoPlayNext = true
+    private var drawerAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>? = null
     private val playQueue = mutableListOf<Uri>()
     private var currentPlayIndex = -1
     private var currentlyPlayingUri: Uri? = null
@@ -265,6 +268,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         preferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        autoScrollOnTrackChange = preferences.getBoolean(KEY_AUTO_SCROLL_ON_TRACK_CHANGE, true)
+        autoPlayNext = preferences.getBoolean(KEY_AUTO_PLAY_NEXT, true)
 
         emptyMessageView = findViewById(R.id.emptyMessage)
         loadingMessageView = findViewById(R.id.loadingMessage)
@@ -606,6 +611,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_RINGTONE_SELECTED = "persistent_selected_ringtone"
         private const val KEY_ALARM_SELECTED = "persistent_selected_alarm"
         private const val KEY_NOTIFICATION_SELECTED = "persistent_selected_notification"
+        private const val KEY_AUTO_SCROLL_ON_TRACK_CHANGE = "auto_scroll_on_track_change"
+        private const val KEY_AUTO_PLAY_NEXT = "auto_play_next"
     }
 
     private enum class FolderCategory {
@@ -856,12 +863,17 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun scrollToPlayingItem() {
-        if (currentlyPlayingUri == null) return
+        if (currentlyPlayingUri == null || !autoScrollOnTrackChange) return
         
         val displayName = getDisplayName(currentlyPlayingUri!!)
         val position = displayList.indexOf(displayName)
         if (position >= 0) {
-            folderListView.setSelection(position)
+            // 항목이 화면 가운데로 오도록 스크롤
+            val firstVisible = folderListView.firstVisiblePosition
+            val lastVisible = folderListView.lastVisiblePosition
+            val visibleCount = lastVisible - firstVisible
+            val targetPosition = position - visibleCount / 2
+            folderListView.setSelection(targetPosition.coerceAtLeast(0))
         }
     }
     
@@ -926,8 +938,15 @@ class MainActivity : AppCompatActivity() {
                 scrollToPlayingItem()
             }
             setOnCompletionListener {
-                // 다음 항목 자동 재생
-                playNextItem()
+                // 다음 항목 자동 재생 (옵션이 켜져있을 때만)
+                if (autoPlayNext) {
+                    playNextItem()
+                } else {
+                    // 자동 재생이 비활성화되어 있으면 재생만 중지
+                    stopProgressUpdater()
+                    updatePlayPauseButtons()
+                    folderAdapter.notifyDataSetChanged()
+                }
             }
             setOnErrorListener { _, what, extra ->
                 stopProgressUpdater()
@@ -1354,7 +1373,14 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val navRecyclerView = findViewById<RecyclerView>(R.id.navRecyclerView)
         
-        val menuItems = listOf(getString(R.string.export), getString(R.string.import1), getString(R.string.load_playlist), getString(R.string.manual))
+        val menuItems = listOf(
+            getString(R.string.export),
+            getString(R.string.import1),
+            getString(R.string.load_playlist),
+            getString(R.string.manual),
+            getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)",
+            getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)"
+        )
         val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.nav_drawer_item, parent, false)
@@ -1363,7 +1389,15 @@ class MainActivity : AppCompatActivity() {
 
             override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
                 val textView = holder.itemView.findViewById<TextView>(R.id.navItemText)
-                textView.text = menuItems[position]
+                when (position) {
+                    0 -> textView.text = getString(R.string.export)
+                    1 -> textView.text = getString(R.string.import1)
+                    2 -> textView.text = getString(R.string.load_playlist)
+                    3 -> textView.text = getString(R.string.manual)
+                    4 -> textView.text = getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)"
+                    5 -> textView.text = getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)"
+                    else -> textView.text = menuItems[position]
+                }
                 holder.itemView.setOnClickListener {
                     when (position) {
                         0 -> createDocumentLauncher.launch("RandomRingtone_backup.json")
@@ -1372,6 +1406,18 @@ class MainActivity : AppCompatActivity() {
                         3 -> {
                             val intent = Intent(this@MainActivity, ManualActivity::class.java)
                             startActivity(intent)
+                        }
+                        4 -> {
+                            // 곡 넘어갈때 자동 스크롤 토글
+                            autoScrollOnTrackChange = !autoScrollOnTrackChange
+                            preferences.edit().putBoolean(KEY_AUTO_SCROLL_ON_TRACK_CHANGE, autoScrollOnTrackChange).apply()
+                            drawerAdapter?.notifyItemChanged(4)
+                        }
+                        5 -> {
+                            // 곡 자동으로 넘기기 토글
+                            autoPlayNext = !autoPlayNext
+                            preferences.edit().putBoolean(KEY_AUTO_PLAY_NEXT, autoPlayNext).apply()
+                            drawerAdapter?.notifyItemChanged(5)
                         }
                     }
                     drawerLayout.closeDrawer(GravityCompat.START)
@@ -1383,6 +1429,7 @@ class MainActivity : AppCompatActivity() {
         
         navRecyclerView.layoutManager = LinearLayoutManager(this)
         navRecyclerView.adapter = adapter
+        drawerAdapter = adapter
     }
 
     private fun exportDataToFile(uri: Uri) {
