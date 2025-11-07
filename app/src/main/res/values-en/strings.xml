@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">RandomRingtone</string>
+    <string name="add_folder">Add Folder</string>
+    <string name="empty_folder_list">No folders registered.</string>
+    <string name="tab_ringtone">Ringtone</string>
+    <string name="tab_alarm">Alarm</string>
+    <string name="tab_notification">Notification</string>
+    <string name="delete_folder_title">Delete Folder</string>
+    <string name="delete_folder_message">Delete "%1$s"?</string>
+    <string name="delete_folder_confirm">Delete</string>
+    <string name="delete_confirmation_default">Selected folder</string>
+    <string name="delete_selected">Delete Selected</string>
+    <string name="delete_selected_title">Delete Selected Items</string>
+    <string name="delete_selected_message">Delete %1$d selected items?</string>
+    <string name="add_choice_title">What would you like to add?</string>
+    <string name="add_choice_folder">Select Folder</string>
+    <string name="add_choice_files">Select Music Files</string>
+    <string name="add_choice_folder_all_files">All Music Files in Folder</string>
+    <string name="add_more_folders_title">Add Folder</string>
+    <string name="add_more_folders_message">Add more folders?</string>
+    <string name="delete_menu_title">Delete</string>
+    <string name="delete_all">Delete All</string>
+    <string name="delete_all_title">Delete All</string>
+    <string name="delete_all_message">Delete all items in the current tab?</string>
+    <string name="cancel_selection">Cancel Selection</string>
+    <string name="menu">Menu</string>
+</resources>
+

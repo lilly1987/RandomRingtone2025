@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">צלצול אקראי</string>
+    <string name="add_folder">הוסף תיקייה</string>
+    <string name="empty_folder_list">אין תיקיות רשומות.</string>
+    <string name="tab_ringtone">צלצול</string>
+    <string name="tab_alarm">שעון מעורר</string>
+    <string name="tab_notification">התראה</string>
+    <string name="delete_folder_title">מחק תיקייה</string>
+    <string name="delete_folder_message">למחוק "%1$s"?</string>
+    <string name="delete_folder_confirm">מחק</string>
+    <string name="delete_confirmation_default">התיקייה שנבחרה</string>
+    <string name="delete_selected">מחק נבחרים</string>
+    <string name="delete_selected_title">מחק פריטים נבחרים</string>
+    <string name="delete_selected_message">למחוק %1$d פריטים נבחרים?</string>
+    <string name="add_choice_title">מה תרצה להוסיף?</string>
+    <string name="add_choice_folder">בחר תיקייה</string>
+    <string name="add_choice_files">בחר קבצי מוזיקה</string>
+    <string name="add_choice_folder_all_files">כל קבצי המוזיקה בתיקייה</string>
+    <string name="add_more_folders_title">הוסף תיקייה</string>
+    <string name="add_more_folders_message">להוסיף עוד תיקיות?</string>
+    <string name="delete_menu_title">מחק</string>
+    <string name="delete_all">מחק הכל</string>
+    <string name="delete_all_title">מחק הכל</string>
+    <string name="delete_all_message">למחוק את כל הפריטים בכרטיסייה הנוכחית?</string>
+    <string name="cancel_selection">בטל בחירה</string>
+    <string name="menu">תפריט</string>
+</resources>
+

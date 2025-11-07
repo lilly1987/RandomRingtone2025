@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Slumpmässig ringsignal</string>
+    <string name="add_folder">Lägg till mapp</string>
+    <string name="empty_folder_list">Inga mappar registrerade.</string>
+    <string name="tab_ringtone">Ringsignal</string>
+    <string name="tab_alarm">Väckarklocka</string>
+    <string name="tab_notification">Avisering</string>
+    <string name="delete_folder_title">Ta bort mapp</string>
+    <string name="delete_folder_message">Ta bort "%1$s"?</string>
+    <string name="delete_folder_confirm">Ta bort</string>
+    <string name="delete_confirmation_default">Vald mapp</string>
+    <string name="delete_selected">Ta bort valda</string>
+    <string name="delete_selected_title">Ta bort valda objekt</string>
+    <string name="delete_selected_message">Ta bort %1$d valda objekt?</string>
+    <string name="add_choice_title">Vad vill du lägga till?</string>
+    <string name="add_choice_folder">Välj mapp</string>
+    <string name="add_choice_files">Välj musikfiler</string>
+    <string name="add_choice_folder_all_files">Alla musikfiler i mappen</string>
+    <string name="add_more_folders_title">Lägg till mapp</string>
+    <string name="add_more_folders_message">Lägg till fler mappar?</string>
+    <string name="delete_menu_title">Ta bort</string>
+    <string name="delete_all">Ta bort allt</string>
+    <string name="delete_all_title">Ta bort allt</string>
+    <string name="delete_all_message">Ta bort alla objekt på den aktuella fliken?</string>
+    <string name="cancel_selection">Avbryt val</string>
+    <string name="menu">Meny</string>
+</resources>
+

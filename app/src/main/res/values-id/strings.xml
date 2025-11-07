@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Nada Dering Acak</string>
+    <string name="add_folder">Tambahkan Folder</string>
+    <string name="empty_folder_list">Tidak ada folder yang terdaftar.</string>
+    <string name="tab_ringtone">Nada Dering</string>
+    <string name="tab_alarm">Alarm</string>
+    <string name="tab_notification">Notifikasi</string>
+    <string name="delete_folder_title">Hapus Folder</string>
+    <string name="delete_folder_message">Hapus "%1$s"?</string>
+    <string name="delete_folder_confirm">Hapus</string>
+    <string name="delete_confirmation_default">Folder yang dipilih</string>
+    <string name="delete_selected">Hapus yang Dipilih</string>
+    <string name="delete_selected_title">Hapus Item yang Dipilih</string>
+    <string name="delete_selected_message">Hapus %1$d item yang dipilih?</string>
+    <string name="add_choice_title">Apa yang ingin Anda tambahkan?</string>
+    <string name="add_choice_folder">Pilih Folder</string>
+    <string name="add_choice_files">Pilih File Musik</string>
+    <string name="add_choice_folder_all_files">Semua File Musik di Folder</string>
+    <string name="add_more_folders_title">Tambahkan Folder</string>
+    <string name="add_more_folders_message">Tambahkan folder lagi?</string>
+    <string name="delete_menu_title">Hapus</string>
+    <string name="delete_all">Hapus Semua</string>
+    <string name="delete_all_title">Hapus Semua</string>
+    <string name="delete_all_message">Hapus semua item di tab saat ini?</string>
+    <string name="cancel_selection">Batalkan Pilihan</string>
+    <string name="menu">Menu</string>
+</resources>
+

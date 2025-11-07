@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">ランダム着信音</string>
+    <string name="add_folder">フォルダを追加</string>
+    <string name="empty_folder_list">登録されたフォルダがありません。</string>
+    <string name="tab_ringtone">着信音</string>
+    <string name="tab_alarm">アラーム</string>
+    <string name="tab_notification">通知</string>
+    <string name="delete_folder_title">フォルダを削除</string>
+    <string name="delete_folder_message">"%1$s"を削除しますか？</string>
+    <string name="delete_folder_confirm">削除</string>
+    <string name="delete_confirmation_default">選択したフォルダ</string>
+    <string name="delete_selected">選択を削除</string>
+    <string name="delete_selected_title">選択項目を削除</string>
+    <string name="delete_selected_message">選択した%1$d個の項目を削除しますか？</string>
+    <string name="add_choice_title">何を追加しますか？</string>
+    <string name="add_choice_folder">フォルダを選択</string>
+    <string name="add_choice_files">音楽ファイルを選択</string>
+    <string name="add_choice_folder_all_files">フォルダ内のすべての音楽ファイル</string>
+    <string name="add_more_folders_title">フォルダを追加</string>
+    <string name="add_more_folders_message">フォルダをさらに追加しますか？</string>
+    <string name="delete_menu_title">削除</string>
+    <string name="delete_all">すべて削除</string>
+    <string name="delete_all_title">すべて削除</string>
+    <string name="delete_all_message">現在のタブのすべての項目を削除しますか？</string>
+    <string name="cancel_selection">選択をキャンセル</string>
+    <string name="menu">メニュー</string>
+</resources>
+

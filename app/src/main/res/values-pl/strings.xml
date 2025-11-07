@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Losowy dzwonek</string>
+    <string name="add_folder">Dodaj folder</string>
+    <string name="empty_folder_list">Brak zarejestrowanych folderów.</string>
+    <string name="tab_ringtone">Dzwonek</string>
+    <string name="tab_alarm">Budzik</string>
+    <string name="tab_notification">Powiadomienie</string>
+    <string name="delete_folder_title">Usuń folder</string>
+    <string name="delete_folder_message">Usunąć "%1$s"?</string>
+    <string name="delete_folder_confirm">Usuń</string>
+    <string name="delete_confirmation_default">Wybrany folder</string>
+    <string name="delete_selected">Usuń zaznaczone</string>
+    <string name="delete_selected_title">Usuń zaznaczone elementy</string>
+    <string name="delete_selected_message">Usunąć %1$d zaznaczonych elementów?</string>
+    <string name="add_choice_title">Co chcesz dodać?</string>
+    <string name="add_choice_folder">Wybierz folder</string>
+    <string name="add_choice_files">Wybierz pliki muzyczne</string>
+    <string name="add_choice_folder_all_files">Wszystkie pliki muzyczne w folderze</string>
+    <string name="add_more_folders_title">Dodaj folder</string>
+    <string name="add_more_folders_message">Dodać więcej folderów?</string>
+    <string name="delete_menu_title">Usuń</string>
+    <string name="delete_all">Usuń wszystko</string>
+    <string name="delete_all_title">Usuń wszystko</string>
+    <string name="delete_all_message">Usunąć wszystkie elementy w bieżącej karcie?</string>
+    <string name="cancel_selection">Anuluj zaznaczenie</string>
+    <string name="menu">Menu</string>
+</resources>
+

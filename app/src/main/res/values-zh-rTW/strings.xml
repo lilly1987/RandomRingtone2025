@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">隨機鈴聲</string>
+    <string name="add_folder">新增資料夾</string>
+    <string name="empty_folder_list">沒有註冊的資料夾。</string>
+    <string name="tab_ringtone">鈴聲</string>
+    <string name="tab_alarm">鬧鐘</string>
+    <string name="tab_notification">通知</string>
+    <string name="delete_folder_title">刪除資料夾</string>
+    <string name="delete_folder_message">刪除"%1$s"？</string>
+    <string name="delete_folder_confirm">刪除</string>
+    <string name="delete_confirmation_default">選中的資料夾</string>
+    <string name="delete_selected">刪除選中</string>
+    <string name="delete_selected_title">刪除選中項</string>
+    <string name="delete_selected_message">刪除%1$d個選中項？</string>
+    <string name="add_choice_title">要新增什麼？</string>
+    <string name="add_choice_folder">選擇資料夾</string>
+    <string name="add_choice_files">選擇音樂檔案</string>
+    <string name="add_choice_folder_all_files">資料夾中的所有音樂檔案</string>
+    <string name="add_more_folders_title">新增資料夾</string>
+    <string name="add_more_folders_message">新增更多資料夾？</string>
+    <string name="delete_menu_title">刪除</string>
+    <string name="delete_all">全部刪除</string>
+    <string name="delete_all_title">全部刪除</string>
+    <string name="delete_all_message">刪除目前標籤頁的所有項？</string>
+    <string name="cancel_selection">取消選擇</string>
+    <string name="menu">選單</string>
+</resources>
+

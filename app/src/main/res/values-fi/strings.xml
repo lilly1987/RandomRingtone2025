@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Satunnainen soittoääni</string>
+    <string name="add_folder">Lisää kansio</string>
+    <string name="empty_folder_list">Ei rekisteröityjä kansioita.</string>
+    <string name="tab_ringtone">Soittoääni</string>
+    <string name="tab_alarm">Herätyskello</string>
+    <string name="tab_notification">Ilmoitus</string>
+    <string name="delete_folder_title">Poista kansio</string>
+    <string name="delete_folder_message">Poista "%1$s"?</string>
+    <string name="delete_folder_confirm">Poista</string>
+    <string name="delete_confirmation_default">Valittu kansio</string>
+    <string name="delete_selected">Poista valitut</string>
+    <string name="delete_selected_title">Poista valitut kohteet</string>
+    <string name="delete_selected_message">Poista %1$d valittua kohdetta?</string>
+    <string name="add_choice_title">Mitä haluat lisätä?</string>
+    <string name="add_choice_folder">Valitse kansio</string>
+    <string name="add_choice_files">Valitse musiikkitiedostot</string>
+    <string name="add_choice_folder_all_files">Kaikki musiikkitiedostot kansiossa</string>
+    <string name="add_more_folders_title">Lisää kansio</string>
+    <string name="add_more_folders_message">Lisätä lisää kansioita?</string>
+    <string name="delete_menu_title">Poista</string>
+    <string name="delete_all">Poista kaikki</string>
+    <string name="delete_all_title">Poista kaikki</string>
+    <string name="delete_all_message">Poista kaikki kohteet nykyisessä välilehdessä?</string>
+    <string name="cancel_selection">Peruuta valinta</string>
+    <string name="menu">Valikko</string>
+</resources>
+

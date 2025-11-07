@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Rastgele Zil Sesi</string>
+    <string name="add_folder">Klasör Ekle</string>
+    <string name="empty_folder_list">Kayıtlı klasör yok.</string>
+    <string name="tab_ringtone">Zil Sesi</string>
+    <string name="tab_alarm">Alarm</string>
+    <string name="tab_notification">Bildirim</string>
+    <string name="delete_folder_title">Klasörü Sil</string>
+    <string name="delete_folder_message">"%1$s" silinsin mi?</string>
+    <string name="delete_folder_confirm">Sil</string>
+    <string name="delete_confirmation_default">Seçilen klasör</string>
+    <string name="delete_selected">Seçilenleri Sil</string>
+    <string name="delete_selected_title">Seçilen Öğeleri Sil</string>
+    <string name="delete_selected_message">%1$d seçilen öğe silinsin mi?</string>
+    <string name="add_choice_title">Ne eklemek istersiniz?</string>
+    <string name="add_choice_folder">Klasör Seç</string>
+    <string name="add_choice_files">Müzik Dosyaları Seç</string>
+    <string name="add_choice_folder_all_files">Klasördeki Tüm Müzik Dosyaları</string>
+    <string name="add_more_folders_title">Klasör Ekle</string>
+    <string name="add_more_folders_message">Daha fazla klasör ekleyin mi?</string>
+    <string name="delete_menu_title">Sil</string>
+    <string name="delete_all">Tümünü Sil</string>
+    <string name="delete_all_title">Tümünü Sil</string>
+    <string name="delete_all_message">Mevcut sekmedeki tüm öğeler silinsin mi?</string>
+    <string name="cancel_selection">Seçimi İptal Et</string>
+    <string name="menu">Menü</string>
+</resources>
+

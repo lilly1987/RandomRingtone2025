@@ -12,9 +12,10 @@ import org.json.JSONArray
 class NotificationListener : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
-        if (sbn.notification.sound != null) {
+        // 모든 알림에 대해 알림 소리 변경 (기타 알림, 미리알림, 캘린더 소리, 문자 알림 등)
+        Thread {
             updateNotificationRingtone()
-        }
+        }.start()
     }
 
     private fun getRandomAudioFileFromUri(uri: Uri): Uri? {

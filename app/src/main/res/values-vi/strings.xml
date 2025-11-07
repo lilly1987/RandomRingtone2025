@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Nhạc chuông ngẫu nhiên</string>
+    <string name="add_folder">Thêm thư mục</string>
+    <string name="empty_folder_list">Không có thư mục nào được đăng ký.</string>
+    <string name="tab_ringtone">Nhạc chuông</string>
+    <string name="tab_alarm">Báo thức</string>
+    <string name="tab_notification">Thông báo</string>
+    <string name="delete_folder_title">Xóa thư mục</string>
+    <string name="delete_folder_message">Xóa "%1$s"?</string>
+    <string name="delete_folder_confirm">Xóa</string>
+    <string name="delete_confirmation_default">Thư mục đã chọn</string>
+    <string name="delete_selected">Xóa đã chọn</string>
+    <string name="delete_selected_title">Xóa các mục đã chọn</string>
+    <string name="delete_selected_message">Xóa %1$d mục đã chọn?</string>
+    <string name="add_choice_title">Bạn muốn thêm gì?</string>
+    <string name="add_choice_folder">Chọn thư mục</string>
+    <string name="add_choice_files">Chọn tệp nhạc</string>
+    <string name="add_choice_folder_all_files">Tất cả tệp nhạc trong thư mục</string>
+    <string name="add_more_folders_title">Thêm thư mục</string>
+    <string name="add_more_folders_message">Thêm thêm thư mục?</string>
+    <string name="delete_menu_title">Xóa</string>
+    <string name="delete_all">Xóa tất cả</string>
+    <string name="delete_all_title">Xóa tất cả</string>
+    <string name="delete_all_message">Xóa tất cả các mục trong tab hiện tại?</string>
+    <string name="cancel_selection">Hủy chọn</string>
+    <string name="menu">Menu</string>
+</resources>
+

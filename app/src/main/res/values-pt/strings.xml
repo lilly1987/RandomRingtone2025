@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Toque aleatório</string>
+    <string name="add_folder">Adicionar pasta</string>
+    <string name="empty_folder_list">Nenhuma pasta registrada.</string>
+    <string name="tab_ringtone">Toque</string>
+    <string name="tab_alarm">Alarme</string>
+    <string name="tab_notification">Notificação</string>
+    <string name="delete_folder_title">Excluir pasta</string>
+    <string name="delete_folder_message">Excluir "%1$s"?</string>
+    <string name="delete_folder_confirm">Excluir</string>
+    <string name="delete_confirmation_default">Pasta selecionada</string>
+    <string name="delete_selected">Excluir selecionados</string>
+    <string name="delete_selected_title">Excluir itens selecionados</string>
+    <string name="delete_selected_message">Excluir %1$d itens selecionados?</string>
+    <string name="add_choice_title">O que você gostaria de adicionar?</string>
+    <string name="add_choice_folder">Selecionar pasta</string>
+    <string name="add_choice_files">Selecionar arquivos de música</string>
+    <string name="add_choice_folder_all_files">Todos os arquivos de música na pasta</string>
+    <string name="add_more_folders_title">Adicionar pasta</string>
+    <string name="add_more_folders_message">Adicionar mais pastas?</string>
+    <string name="delete_menu_title">Excluir</string>
+    <string name="delete_all">Excluir tudo</string>
+    <string name="delete_all_title">Excluir tudo</string>
+    <string name="delete_all_message">Excluir todos os itens na aba atual?</string>
+    <string name="cancel_selection">Cancelar seleção</string>
+    <string name="menu">Menu</string>
+</resources>
+

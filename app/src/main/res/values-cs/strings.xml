@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Náhodný vyzvánění</string>
+    <string name="add_folder">Přidat složku</string>
+    <string name="empty_folder_list">Žádné složky nejsou registrovány.</string>
+    <string name="tab_ringtone">Vyzvánění</string>
+    <string name="tab_alarm">Budík</string>
+    <string name="tab_notification">Oznámení</string>
+    <string name="delete_folder_title">Smazat složku</string>
+    <string name="delete_folder_message">Smazat "%1$s"?</string>
+    <string name="delete_folder_confirm">Smazat</string>
+    <string name="delete_confirmation_default">Vybraná složka</string>
+    <string name="delete_selected">Smazat vybrané</string>
+    <string name="delete_selected_title">Smazat vybrané položky</string>
+    <string name="delete_selected_message">Smazat %1$d vybraných položek?</string>
+    <string name="add_choice_title">Co chcete přidat?</string>
+    <string name="add_choice_folder">Vybrat složku</string>
+    <string name="add_choice_files">Vybrat hudební soubory</string>
+    <string name="add_choice_folder_all_files">Všechny hudební soubory ve složce</string>
+    <string name="add_more_folders_title">Přidat složku</string>
+    <string name="add_more_folders_message">Přidat další složky?</string>
+    <string name="delete_menu_title">Smazat</string>
+    <string name="delete_all">Smazat vše</string>
+    <string name="delete_all_title">Smazat vše</string>
+    <string name="delete_all_message">Smazat všechny položky na aktuální kartě?</string>
+    <string name="cancel_selection">Zrušit výběr</string>
+    <string name="menu">Menu</string>
+</resources>
+

@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Willekeurige beltoon</string>
+    <string name="add_folder">Map toevoegen</string>
+    <string name="empty_folder_list">Geen mappen geregistreerd.</string>
+    <string name="tab_ringtone">Beltoon</string>
+    <string name="tab_alarm">Wecker</string>
+    <string name="tab_notification">Melding</string>
+    <string name="delete_folder_title">Map verwijderen</string>
+    <string name="delete_folder_message">"%1$s" verwijderen?</string>
+    <string name="delete_folder_confirm">Verwijderen</string>
+    <string name="delete_confirmation_default">Geselecteerde map</string>
+    <string name="delete_selected">Geselecteerde verwijderen</string>
+    <string name="delete_selected_title">Geselecteerde items verwijderen</string>
+    <string name="delete_selected_message">%1$d geselecteerde items verwijderen?</string>
+    <string name="add_choice_title">Wat wilt u toevoegen?</string>
+    <string name="add_choice_folder">Map selecteren</string>
+    <string name="add_choice_files">Muziekbestanden selecteren</string>
+    <string name="add_choice_folder_all_files">Alle muziekbestanden in de map</string>
+    <string name="add_more_folders_title">Map toevoegen</string>
+    <string name="add_more_folders_message">Meer mappen toevoegen?</string>
+    <string name="delete_menu_title">Verwijderen</string>
+    <string name="delete_all">Alles verwijderen</string>
+    <string name="delete_all_title">Alles verwijderen</string>
+    <string name="delete_all_message">Alle items in het huidige tabblad verwijderen?</string>
+    <string name="cancel_selection">Selectie annuleren</string>
+    <string name="menu">Menu</string>
+</resources>
+

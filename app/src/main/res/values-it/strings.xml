@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Squillo casuale</string>
+    <string name="add_folder">Aggiungi cartella</string>
+    <string name="empty_folder_list">Nessuna cartella registrata.</string>
+    <string name="tab_ringtone">Squillo</string>
+    <string name="tab_alarm">Sveglia</string>
+    <string name="tab_notification">Notifica</string>
+    <string name="delete_folder_title">Elimina cartella</string>
+    <string name="delete_folder_message">Eliminare "%1$s"?</string>
+    <string name="delete_folder_confirm">Elimina</string>
+    <string name="delete_confirmation_default">Cartella selezionata</string>
+    <string name="delete_selected">Elimina selezionati</string>
+    <string name="delete_selected_title">Elimina elementi selezionati</string>
+    <string name="delete_selected_message">Eliminare %1$d elementi selezionati?</string>
+    <string name="add_choice_title">Cosa vuoi aggiungere?</string>
+    <string name="add_choice_folder">Seleziona cartella</string>
+    <string name="add_choice_files">Seleziona file musicali</string>
+    <string name="add_choice_folder_all_files">Tutti i file musicali nella cartella</string>
+    <string name="add_more_folders_title">Aggiungi cartella</string>
+    <string name="add_more_folders_message">Aggiungere altre cartelle?</string>
+    <string name="delete_menu_title">Elimina</string>
+    <string name="delete_all">Elimina tutto</string>
+    <string name="delete_all_title">Elimina tutto</string>
+    <string name="delete_all_message">Eliminare tutti gli elementi nella scheda corrente?</string>
+    <string name="cancel_selection">Annulla selezione</string>
+    <string name="menu">Menu</string>
+</resources>
+

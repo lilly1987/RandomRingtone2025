@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Tono aleatorio</string>
+    <string name="add_folder">Agregar carpeta</string>
+    <string name="empty_folder_list">No hay carpetas registradas.</string>
+    <string name="tab_ringtone">Tono</string>
+    <string name="tab_alarm">Alarma</string>
+    <string name="tab_notification">Notificación</string>
+    <string name="delete_folder_title">Eliminar carpeta</string>
+    <string name="delete_folder_message">¿Eliminar "%1$s"?</string>
+    <string name="delete_folder_confirm">Eliminar</string>
+    <string name="delete_confirmation_default">Carpeta seleccionada</string>
+    <string name="delete_selected">Eliminar selección</string>
+    <string name="delete_selected_title">Eliminar elementos seleccionados</string>
+    <string name="delete_selected_message">¿Eliminar %1$d elementos seleccionados?</string>
+    <string name="add_choice_title">¿Qué desea agregar?</string>
+    <string name="add_choice_folder">Seleccionar carpeta</string>
+    <string name="add_choice_files">Seleccionar archivos de música</string>
+    <string name="add_choice_folder_all_files">Todos los archivos de música en la carpeta</string>
+    <string name="add_more_folders_title">Agregar carpeta</string>
+    <string name="add_more_folders_message">¿Agregar más carpetas?</string>
+    <string name="delete_menu_title">Eliminar</string>
+    <string name="delete_all">Eliminar todo</string>
+    <string name="delete_all_title">Eliminar todo</string>
+    <string name="delete_all_message">¿Eliminar todos los elementos de la pestaña actual?</string>
+    <string name="cancel_selection">Cancelar selección</string>
+    <string name="menu">Menú</string>
+</resources>
+

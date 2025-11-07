@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Zufälliger Klingelton</string>
+    <string name="add_folder">Ordner hinzufügen</string>
+    <string name="empty_folder_list">Keine Ordner registriert.</string>
+    <string name="tab_ringtone">Klingelton</string>
+    <string name="tab_alarm">Wecker</string>
+    <string name="tab_notification">Benachrichtigung</string>
+    <string name="delete_folder_title">Ordner löschen</string>
+    <string name="delete_folder_message">"%1$s" löschen?</string>
+    <string name="delete_folder_confirm">Löschen</string>
+    <string name="delete_confirmation_default">Ausgewählter Ordner</string>
+    <string name="delete_selected">Ausgewählte löschen</string>
+    <string name="delete_selected_title">Ausgewählte Elemente löschen</string>
+    <string name="delete_selected_message">%1$d ausgewählte Elemente löschen?</string>
+    <string name="add_choice_title">Was möchten Sie hinzufügen?</string>
+    <string name="add_choice_folder">Ordner auswählen</string>
+    <string name="add_choice_files">Musikdateien auswählen</string>
+    <string name="add_choice_folder_all_files">Alle Musikdateien im Ordner</string>
+    <string name="add_more_folders_title">Ordner hinzufügen</string>
+    <string name="add_more_folders_message">Weitere Ordner hinzufügen?</string>
+    <string name="delete_menu_title">Löschen</string>
+    <string name="delete_all">Alle löschen</string>
+    <string name="delete_all_title">Alle löschen</string>
+    <string name="delete_all_message">Alle Elemente im aktuellen Tab löschen?</string>
+    <string name="cancel_selection">Auswahl abbrechen</string>
+    <string name="menu">Menü</string>
+</resources>
+

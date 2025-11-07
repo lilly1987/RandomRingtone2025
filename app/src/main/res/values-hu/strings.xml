@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Véletlenszerű csengőhang</string>
+    <string name="add_folder">Mappa hozzáadása</string>
+    <string name="empty_folder_list">Nincs regisztrált mappa.</string>
+    <string name="tab_ringtone">Csengőhang</string>
+    <string name="tab_alarm">Ébresztő</string>
+    <string name="tab_notification">Értesítés</string>
+    <string name="delete_folder_title">Mappa törlése</string>
+    <string name="delete_folder_message">Törli a "%1$s" mappát?</string>
+    <string name="delete_folder_confirm">Törlés</string>
+    <string name="delete_confirmation_default">Kiválasztott mappa</string>
+    <string name="delete_selected">Kijelöltek törlése</string>
+    <string name="delete_selected_title">Kijelölt elemek törlése</string>
+    <string name="delete_selected_message">Törli a %1$d kijelölt elemet?</string>
+    <string name="add_choice_title">Mit szeretne hozzáadni?</string>
+    <string name="add_choice_folder">Mappa kiválasztása</string>
+    <string name="add_choice_files">Zenei fájlok kiválasztása</string>
+    <string name="add_choice_folder_all_files">Minden zenei fájl a mappában</string>
+    <string name="add_more_folders_title">Mappa hozzáadása</string>
+    <string name="add_more_folders_message">További mappákat szeretne hozzáadni?</string>
+    <string name="delete_menu_title">Törlés</string>
+    <string name="delete_all">Összes törlése</string>
+    <string name="delete_all_title">Összes törlése</string>
+    <string name="delete_all_message">Törli az aktuális lapon lévő összes elemet?</string>
+    <string name="cancel_selection">Kijelölés megszakítása</string>
+    <string name="menu">Menü</string>
+</resources>
+

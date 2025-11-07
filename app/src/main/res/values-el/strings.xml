@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Τυχαίος ήχος κλήσης</string>
+    <string name="add_folder">Προσθήκη φακέλου</string>
+    <string name="empty_folder_list">Δεν υπάρχουν καταχωρημένοι φάκελοι.</string>
+    <string name="tab_ringtone">Ήχος κλήσης</string>
+    <string name="tab_alarm">Ξυπνητήρι</string>
+    <string name="tab_notification">Ειδοποίηση</string>
+    <string name="delete_folder_title">Διαγραφή φακέλου</string>
+    <string name="delete_folder_message">Διαγραφή "%1$s";</string>
+    <string name="delete_folder_confirm">Διαγραφή</string>
+    <string name="delete_confirmation_default">Επιλεγμένος φάκελος</string>
+    <string name="delete_selected">Διαγραφή επιλεγμένων</string>
+    <string name="delete_selected_title">Διαγραφή επιλεγμένων στοιχείων</string>
+    <string name="delete_selected_message">Διαγραφή %1$d επιλεγμένων στοιχείων;</string>
+    <string name="add_choice_title">Τι θέλετε να προσθέσετε;</string>
+    <string name="add_choice_folder">Επιλογή φακέλου</string>
+    <string name="add_choice_files">Επιλογή μουσικών αρχείων</string>
+    <string name="add_choice_folder_all_files">Όλα τα μουσικά αρχεία στον φάκελο</string>
+    <string name="add_more_folders_title">Προσθήκη φακέλου</string>
+    <string name="add_more_folders_message">Προσθήκη περισσότερων φακέλων;</string>
+    <string name="delete_menu_title">Διαγραφή</string>
+    <string name="delete_all">Διαγραφή όλων</string>
+    <string name="delete_all_title">Διαγραφή όλων</string>
+    <string name="delete_all_message">Διαγραφή όλων των στοιχείων στην τρέχουσα καρτέλα;</string>
+    <string name="cancel_selection">Ακύρωση επιλογής</string>
+    <string name="menu">Μενού</string>
+</resources>

@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Sunet de apel aleator</string>
+    <string name="add_folder">Adăugați folder</string>
+    <string name="empty_folder_list">Nu există foldere înregistrate.</string>
+    <string name="tab_ringtone">Sunet de apel</string>
+    <string name="tab_alarm">Alarmă</string>
+    <string name="tab_notification">Notificare</string>
+    <string name="delete_folder_title">Ștergeți folderul</string>
+    <string name="delete_folder_message">Ștergeți "%1$s"?</string>
+    <string name="delete_folder_confirm">Ștergeți</string>
+    <string name="delete_confirmation_default">Folderul selectat</string>
+    <string name="delete_selected">Ștergeți selectate</string>
+    <string name="delete_selected_title">Ștergeți elementele selectate</string>
+    <string name="delete_selected_message">Ștergeți %1$d elemente selectate?</string>
+    <string name="add_choice_title">Ce doriți să adăugați?</string>
+    <string name="add_choice_folder">Selectați folder</string>
+    <string name="add_choice_files">Selectați fișiere muzicale</string>
+    <string name="add_choice_folder_all_files">Toate fișierele muzicale din folder</string>
+    <string name="add_more_folders_title">Adăugați folder</string>
+    <string name="add_more_folders_message">Adăugați mai multe foldere?</string>
+    <string name="delete_menu_title">Ștergeți</string>
+    <string name="delete_all">Ștergeți tot</string>
+    <string name="delete_all_title">Ștergeți tot</string>
+    <string name="delete_all_message">Ștergeți toate elementele din tab-ul curent?</string>
+    <string name="cancel_selection">Anulați selecția</string>
+    <string name="menu">Meniu</string>
+</resources>
+

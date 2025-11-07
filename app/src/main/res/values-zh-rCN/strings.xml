@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">随机铃声</string>
+    <string name="add_folder">添加文件夹</string>
+    <string name="empty_folder_list">没有注册的文件夹。</string>
+    <string name="tab_ringtone">铃声</string>
+    <string name="tab_alarm">闹钟</string>
+    <string name="tab_notification">通知</string>
+    <string name="delete_folder_title">删除文件夹</string>
+    <string name="delete_folder_message">删除"%1$s"？</string>
+    <string name="delete_folder_confirm">删除</string>
+    <string name="delete_confirmation_default">选中的文件夹</string>
+    <string name="delete_selected">删除选中</string>
+    <string name="delete_selected_title">删除选中项</string>
+    <string name="delete_selected_message">删除%1$d个选中项？</string>
+    <string name="add_choice_title">要添加什么？</string>
+    <string name="add_choice_folder">选择文件夹</string>
+    <string name="add_choice_files">选择音乐文件</string>
+    <string name="add_choice_folder_all_files">文件夹中的所有音乐文件</string>
+    <string name="add_more_folders_title">添加文件夹</string>
+    <string name="add_more_folders_message">添加更多文件夹？</string>
+    <string name="delete_menu_title">删除</string>
+    <string name="delete_all">全部删除</string>
+    <string name="delete_all_title">全部删除</string>
+    <string name="delete_all_message">删除当前标签页的所有项？</string>
+    <string name="cancel_selection">取消选择</string>
+    <string name="menu">菜单</string>
+</resources>
+

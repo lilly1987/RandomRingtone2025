@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Tilfældig ringetone</string>
+    <string name="add_folder">Tilføj mappe</string>
+    <string name="empty_folder_list">Ingen mapper registreret.</string>
+    <string name="tab_ringtone">Ringetone</string>
+    <string name="tab_alarm">Vækkeur</string>
+    <string name="tab_notification">Notifikation</string>
+    <string name="delete_folder_title">Slet mappe</string>
+    <string name="delete_folder_message">Slette "%1$s"?</string>
+    <string name="delete_folder_confirm">Slet</string>
+    <string name="delete_confirmation_default">Valgt mappe</string>
+    <string name="delete_selected">Slet valgte</string>
+    <string name="delete_selected_title">Slet valgte elementer</string>
+    <string name="delete_selected_message">Slette %1$d valgte elementer?</string>
+    <string name="add_choice_title">Hvad vil du tilføje?</string>
+    <string name="add_choice_folder">Vælg mappe</string>
+    <string name="add_choice_files">Vælg musikfiler</string>
+    <string name="add_choice_folder_all_files">Alle musikfiler i mappen</string>
+    <string name="add_more_folders_title">Tilføj mappe</string>
+    <string name="add_more_folders_message">Tilføje flere mapper?</string>
+    <string name="delete_menu_title">Slet</string>
+    <string name="delete_all">Slet alt</string>
+    <string name="delete_all_title">Slet alt</string>
+    <string name="delete_all_message">Slette alle elementer i den aktuelle fane?</string>
+    <string name="cancel_selection">Annuller valg</string>
+    <string name="menu">Menu</string>
+</resources>
+

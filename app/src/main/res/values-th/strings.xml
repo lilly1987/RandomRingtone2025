@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">เสียงเรียกเข้าแบบสุ่ม</string>
+    <string name="add_folder">เพิ่มโฟลเดอร์</string>
+    <string name="empty_folder_list">ไม่มีโฟลเดอร์ที่ลงทะเบียน</string>
+    <string name="tab_ringtone">เสียงเรียกเข้า</string>
+    <string name="tab_alarm">นาฬิกาปลุก</string>
+    <string name="tab_notification">การแจ้งเตือน</string>
+    <string name="delete_folder_title">ลบโฟลเดอร์</string>
+    <string name="delete_folder_message">ลบ "%1$s"?</string>
+    <string name="delete_folder_confirm">ลบ</string>
+    <string name="delete_confirmation_default">โฟลเดอร์ที่เลือก</string>
+    <string name="delete_selected">ลบที่เลือก</string>
+    <string name="delete_selected_title">ลบรายการที่เลือก</string>
+    <string name="delete_selected_message">ลบ %1$d รายการที่เลือก?</string>
+    <string name="add_choice_title">คุณต้องการเพิ่มอะไร?</string>
+    <string name="add_choice_folder">เลือกโฟลเดอร์</string>
+    <string name="add_choice_files">เลือกไฟล์เพลง</string>
+    <string name="add_choice_folder_all_files">ไฟล์เพลงทั้งหมดในโฟลเดอร์</string>
+    <string name="add_more_folders_title">เพิ่มโฟลเดอร์</string>
+    <string name="add_more_folders_message">เพิ่มโฟลเดอร์เพิ่มเติม?</string>
+    <string name="delete_menu_title">ลบ</string>
+    <string name="delete_all">ลบทั้งหมด</string>
+    <string name="delete_all_title">ลบทั้งหมด</string>
+    <string name="delete_all_message">ลบรายการทั้งหมดในแท็บปัจจุบัน?</string>
+    <string name="cancel_selection">ยกเลิกการเลือก</string>
+    <string name="menu">เมนู</string>
+</resources>
+

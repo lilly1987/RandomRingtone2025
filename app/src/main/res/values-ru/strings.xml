@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Случайный звонок</string>
+    <string name="add_folder">Добавить папку</string>
+    <string name="empty_folder_list">Нет зарегистрированных папок.</string>
+    <string name="tab_ringtone">Звонок</string>
+    <string name="tab_alarm">Будильник</string>
+    <string name="tab_notification">Уведомление</string>
+    <string name="delete_folder_title">Удалить папку</string>
+    <string name="delete_folder_message">Удалить "%1$s"?</string>
+    <string name="delete_folder_confirm">Удалить</string>
+    <string name="delete_confirmation_default">Выбранная папка</string>
+    <string name="delete_selected">Удалить выбранное</string>
+    <string name="delete_selected_title">Удалить выбранные элементы</string>
+    <string name="delete_selected_message">Удалить %1$d выбранных элементов?</string>
+    <string name="add_choice_title">Что вы хотите добавить?</string>
+    <string name="add_choice_folder">Выбрать папку</string>
+    <string name="add_choice_files">Выбрать музыкальные файлы</string>
+    <string name="add_choice_folder_all_files">Все музыкальные файлы в папке</string>
+    <string name="add_more_folders_title">Добавить папку</string>
+    <string name="add_more_folders_message">Добавить еще папки?</string>
+    <string name="delete_menu_title">Удалить</string>
+    <string name="delete_all">Удалить все</string>
+    <string name="delete_all_title">Удалить все</string>
+    <string name="delete_all_message">Удалить все элементы в текущей вкладке?</string>
+    <string name="cancel_selection">Отменить выбор</string>
+    <string name="menu">Меню</string>
+</resources>
+

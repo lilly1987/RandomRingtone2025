@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">रैंडम रिंगटोन</string>
+    <string name="add_folder">फ़ोल्डर जोड़ें</string>
+    <string name="empty_folder_list">कोई फ़ोल्डर पंजीकृत नहीं है।</string>
+    <string name="tab_ringtone">रिंगटोन</string>
+    <string name="tab_alarm">अलार्म</string>
+    <string name="tab_notification">सूचना</string>
+    <string name="delete_folder_title">फ़ोल्डर हटाएं</string>
+    <string name="delete_folder_message">"%1$s" हटाएं?</string>
+    <string name="delete_folder_confirm">हटाएं</string>
+    <string name="delete_confirmation_default">चयनित फ़ोल्डर</string>
+    <string name="delete_selected">चयनित हटाएं</string>
+    <string name="delete_selected_title">चयनित आइटम हटाएं</string>
+    <string name="delete_selected_message">%1$d चयनित आइटम हटाएं?</string>
+    <string name="add_choice_title">आप क्या जोड़ना चाहते हैं?</string>
+    <string name="add_choice_folder">फ़ोल्डर चुनें</string>
+    <string name="add_choice_files">संगीत फ़ाइलें चुनें</string>
+    <string name="add_choice_folder_all_files">फ़ोल्डर में सभी संगीत फ़ाइलें</string>
+    <string name="add_more_folders_title">फ़ोल्डर जोड़ें</string>
+    <string name="add_more_folders_message">और फ़ोल्डर जोड़ें?</string>
+    <string name="delete_menu_title">हटाएं</string>
+    <string name="delete_all">सभी हटाएं</string>
+    <string name="delete_all_title">सभी हटाएं</string>
+    <string name="delete_all_message">वर्तमान टैब के सभी आइटम हटाएं?</string>
+    <string name="cancel_selection">चयन रद्द करें</string>
+    <string name="menu">मेनू</string>
+</resources>
+

@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Sonnerie aléatoire</string>
+    <string name="add_folder">Ajouter un dossier</string>
+    <string name="empty_folder_list">Aucun dossier enregistré.</string>
+    <string name="tab_ringtone">Sonnerie</string>
+    <string name="tab_alarm">Réveil</string>
+    <string name="tab_notification">Notification</string>
+    <string name="delete_folder_title">Supprimer le dossier</string>
+    <string name="delete_folder_message">Supprimer "%1$s"?</string>
+    <string name="delete_folder_confirm">Supprimer</string>
+    <string name="delete_confirmation_default">Dossier sélectionné</string>
+    <string name="delete_selected">Supprimer la sélection</string>
+    <string name="delete_selected_title">Supprimer les éléments sélectionnés</string>
+    <string name="delete_selected_message">Supprimer %1$d éléments sélectionnés?</string>
+    <string name="add_choice_title">Que souhaitez-vous ajouter?</string>
+    <string name="add_choice_folder">Sélectionner un dossier</string>
+    <string name="add_choice_files">Sélectionner des fichiers musicaux</string>
+    <string name="add_choice_folder_all_files">Tous les fichiers musicaux du dossier</string>
+    <string name="add_more_folders_title">Ajouter un dossier</string>
+    <string name="add_more_folders_message">Ajouter d\'autres dossiers?</string>
+    <string name="delete_menu_title">Supprimer</string>
+    <string name="delete_all">Tout supprimer</string>
+    <string name="delete_all_title">Tout supprimer</string>
+    <string name="delete_all_message">Supprimer tous les éléments de l\'onglet actuel?</string>
+    <string name="cancel_selection">Annuler la sélection</string>
+    <string name="menu">Menu</string>
+</resources>
+

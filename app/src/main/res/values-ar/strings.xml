@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">نغمة عشوائية</string>
+    <string name="add_folder">إضافة مجلد</string>
+    <string name="empty_folder_list">لا توجد مجلدات مسجلة.</string>
+    <string name="tab_ringtone">نغمة</string>
+    <string name="tab_alarm">منبه</string>
+    <string name="tab_notification">إشعار</string>
+    <string name="delete_folder_title">حذف مجلد</string>
+    <string name="delete_folder_message">حذف "%1$s"؟</string>
+    <string name="delete_folder_confirm">حذف</string>
+    <string name="delete_confirmation_default">المجلد المحدد</string>
+    <string name="delete_selected">حذف المحدد</string>
+    <string name="delete_selected_title">حذف العناصر المحددة</string>
+    <string name="delete_selected_message">حذف %1$d عنصر محدد؟</string>
+    <string name="add_choice_title">ماذا تريد إضافة؟</string>
+    <string name="add_choice_folder">اختر مجلد</string>
+    <string name="add_choice_files">اختر ملفات موسيقية</string>
+    <string name="add_choice_folder_all_files">جميع الملفات الموسيقية في المجلد</string>
+    <string name="add_more_folders_title">إضافة مجلد</string>
+    <string name="add_more_folders_message">إضافة المزيد من المجلدات؟</string>
+    <string name="delete_menu_title">حذف</string>
+    <string name="delete_all">حذف الكل</string>
+    <string name="delete_all_title">حذف الكل</string>
+    <string name="delete_all_message">حذف جميع العناصر في التبويب الحالي؟</string>
+    <string name="cancel_selection">إلغاء التحديد</string>
+    <string name="menu">القائمة</string>
+</resources>
+
