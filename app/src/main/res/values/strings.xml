@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">RandomRingtone</string>
+    <string name="add_folder">폴더 추가</string>
+    <string name="empty_folder_list">등록된 폴더가 없습니다.</string>
+    <string name="tab_ringtone">벨소리</string>
+    <string name="tab_alarm">알람</string>
+    <string name="delete_folder_title">폴더 삭제</string>
+    <string name="delete_folder_message">"%1$s"를 삭제할까요?</string>
+    <string name="delete_folder_confirm">삭제</string>
+    <string name="delete_confirmation_default">선택한 폴더</string>
+    <string name="delete_selected">선택 삭제</string>
+    <string name="delete_selected_title">선택 항목 삭제</string>
+    <string name="delete_selected_message">선택한 %1$d개 항목을 삭제할까요?</string>
+    <string name="add_choice_title">무엇을 추가할까요?</string>
+    <string name="add_choice_folder">폴더 선택</string>
+    <string name="add_choice_files">음악 파일 선택</string>
+    <string name="add_choice_folder_all_files">폴더 안의 모든 음악 파일</string>
+    <string name="add_more_folders_title">폴더 추가</string>
+    <string name="add_more_folders_message">폴더를 더 추가하시겠어요?</string>
+    <string name="delete_menu_title">삭제</string>
+    <string name="delete_all">전체 삭제</string>
+    <string name="delete_all_title">전체 삭제</string>
+    <string name="delete_all_message">현재 탭의 모든 항목을 삭제할까요?</string>
+    <string name="cancel_selection">선택 취소</string>
+</resources>
