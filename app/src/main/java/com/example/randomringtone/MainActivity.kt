@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
 
     private val ringtoneFolders = mutableListOf<Uri>()
     private val alarmFolders = mutableListOf<Uri>()
+    private val notificationFolders = mutableListOf<Uri>()
     private val displayList = mutableListOf<String>()
     private lateinit var folderAdapter: FolderAdapter
     private lateinit var folderListView: ListView
@@ -57,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     private val fileDurationsMs = mutableMapOf<Uri, Long>()
     private val ringtoneSelected = mutableSetOf<Uri>()
     private val alarmSelected = mutableSetOf<Uri>()
+    private val notificationSelected = mutableSetOf<Uri>()
     private val uiHandler = Handler(Looper.getMainLooper())
     private val progressUpdater = object : Runnable {
         override fun run() {
@@ -66,19 +68,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    private val alarmCheckUpdater = object : Runnable {
-        override fun run() {
-            checkAndUpdateAlarmRingtone()
-            uiHandler.postDelayed(this, 60000) // 1분마다 체크
-        }
-    }
     private var selectionMode = false
     private var mediaPlayer: MediaPlayer? = null
     private var currentlyPlayingUri: Uri? = null
     private var telephonyManager: TelephonyManager? = null
     private var phoneStateListener: PhoneStateListener? = null
+    private var pendingFolderCategory: FolderCategory? = null
     private val openFolderAllFilesLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let {
+            val category = pendingFolderCategory ?: currentCategory
+            pendingFolderCategory = null
             try {
                 contentResolver.takePersistableUriPermission(
                     it,
@@ -93,17 +92,23 @@ class MainActivity : AppCompatActivity() {
                     collectAudioUris(root, addedUris)
                 }
                 if (addedUris.isNotEmpty()) {
-                    val currentList = getCurrentFolderList()
+                    val targetList = when (category) {
+                        FolderCategory.RINGTONE -> ringtoneFolders
+                        FolderCategory.ALARM -> alarmFolders
+                        FolderCategory.NOTIFICATION -> notificationFolders
+                    }
                     var changed = false
                     for (fileUri in addedUris) {
-                        if (currentList.none { saved -> saved == fileUri }) {
-                            currentList.add(fileUri)
+                        if (targetList.none { saved -> saved == fileUri }) {
+                            targetList.add(fileUri)
                             changed = true
                         }
                     }
                     if (changed) {
                         runOnUiThread {
-                            updateDisplayList()
+                            if (category == currentCategory) {
+                                updateDisplayList()
+                            }
                             persistFolders()
                         }
                     }
@@ -181,7 +186,8 @@ class MainActivity : AppCompatActivity() {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 currentCategory = when (tab.position) {
                     0 -> FolderCategory.RINGTONE
-                    else -> FolderCategory.ALARM
+                    1 -> FolderCategory.ALARM
+                    else -> FolderCategory.NOTIFICATION
                 }
                 updateDisplayList()
             }
@@ -199,7 +205,11 @@ class MainActivity : AppCompatActivity() {
         restorePersistentSelections()
 
         setupPhoneStateListener()
-        uiHandler.post(alarmCheckUpdater)
+        requestNotificationListenerPermission()
+
+        findViewById<android.widget.ImageButton>(R.id.menuButton).setOnClickListener {
+            // 메뉴 기능은 나중에 추가 가능
+        }
 
         findViewById<FloatingActionButton>(R.id.addFolderButton).setOnClickListener {
             showAddChoiceDialog()
@@ -251,6 +261,10 @@ class MainActivity : AppCompatActivity() {
     private fun restoreFolders() {
         loadCategoryFolders(KEY_RINGTONE_FOLDERS, ringtoneFolders)
         loadCategoryFolders(KEY_ALARM_FOLDERS, alarmFolders)
+        loadCategoryFolders(KEY_NOTIFICATION_FOLDERS, notificationFolders)
+        validateAndRemoveInvalidUris(ringtoneFolders)
+        validateAndRemoveInvalidUris(alarmFolders)
+        validateAndRemoveInvalidUris(notificationFolders)
         updateDisplayList()
     }
 
@@ -258,6 +272,7 @@ class MainActivity : AppCompatActivity() {
         preferences.edit()
             .putString(KEY_RINGTONE_FOLDERS, serializeFolders(ringtoneFolders))
             .putString(KEY_ALARM_FOLDERS, serializeFolders(alarmFolders))
+            .putString(KEY_NOTIFICATION_FOLDERS, serializeFolders(notificationFolders))
             .apply()
     }
 
@@ -280,11 +295,14 @@ class MainActivity : AppCompatActivity() {
     private fun getCurrentFolderList(): MutableList<Uri> = when (currentCategory) {
         FolderCategory.RINGTONE -> ringtoneFolders
         FolderCategory.ALARM -> alarmFolders
+        FolderCategory.NOTIFICATION -> notificationFolders
     }
 
     private fun updateDisplayList() {
+        val currentList = getCurrentFolderList()
+        validateAndRemoveInvalidUris(currentList)
         displayList.clear()
-        getCurrentFolderList().forEach { displayList.add(getDisplayName(it)) }
+        currentList.forEach { displayList.add(getDisplayName(it)) }
         deleteSelectedPositions.clear()
         selectionMode = false
         folderAdapter.notifyDataSetChanged()
@@ -293,6 +311,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getDisplayName(uri: Uri): String = uri.lastPathSegment ?: uri.toString()
+
+    private fun validateAndRemoveInvalidUris(target: MutableList<Uri>) {
+        val toRemove = mutableListOf<Uri>()
+        for (uri in target) {
+            val asTree = DocumentFile.fromTreeUri(this, uri)
+            val asSingle = DocumentFile.fromSingleUri(this, uri)
+            val exists = when {
+                asTree != null -> asTree.exists()
+                asSingle != null -> asSingle.exists()
+                else -> false
+            }
+            if (!exists) {
+                toRemove.add(uri)
+            }
+        }
+        target.removeAll(toRemove)
+        if (toRemove.isNotEmpty()) {
+            persistFolders()
+        }
+    }
 
     private fun loadCategoryFolders(key: String, target: MutableList<Uri>) {
         target.clear()
@@ -337,12 +375,14 @@ class MainActivity : AppCompatActivity() {
         private const val PREF_NAME = "folder_prefs"
         private const val KEY_RINGTONE_FOLDERS = "selected_folders_ringtone"
         private const val KEY_ALARM_FOLDERS = "selected_folders_alarm"
+        private const val KEY_NOTIFICATION_FOLDERS = "selected_folders_notification"
         private const val KEY_RINGTONE_SELECTED = "persistent_selected_ringtone"
         private const val KEY_ALARM_SELECTED = "persistent_selected_alarm"
+        private const val KEY_NOTIFICATION_SELECTED = "persistent_selected_notification"
     }
 
     private enum class FolderCategory {
-        RINGTONE, ALARM
+        RINGTONE, ALARM, NOTIFICATION
     }
 
     private inner class FolderAdapter : ArrayAdapter<String>(this@MainActivity, 0, displayList) {
@@ -517,7 +557,6 @@ class MainActivity : AppCompatActivity() {
         mediaPlayer = null
         currentlyPlayingUri = null
         uiHandler.removeCallbacks(progressUpdater)
-        uiHandler.removeCallbacks(alarmCheckUpdater)
     }
 
     override fun onDestroy() {
@@ -557,9 +596,24 @@ class MainActivity : AppCompatActivity() {
         telephonyManager = null
     }
 
+    private fun getRandomAudioFileFromUri(uri: Uri): Uri? {
+        val asTree = DocumentFile.fromTreeUri(this, uri)
+        val asSingle = DocumentFile.fromSingleUri(this, uri)
+        return when {
+            asSingle != null && asSingle.isFile -> uri
+            asTree != null && asTree.isDirectory -> {
+                val audioFiles = mutableListOf<Uri>()
+                collectAudioUris(asTree, audioFiles)
+                audioFiles.randomOrNull()
+            }
+            else -> null
+        }
+    }
+
     private fun updateRandomRingtone() {
         if (ringtoneSelected.isEmpty()) return
-        val randomUri = ringtoneSelected.randomOrNull() ?: return
+        val selectedUri = ringtoneSelected.randomOrNull() ?: return
+        val audioUri = getRandomAudioFileFromUri(selectedUri) ?: return
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (!Settings.System.canWrite(this)) {
@@ -570,7 +624,7 @@ class MainActivity : AppCompatActivity() {
                     return
                 }
             }
-            Settings.System.putString(contentResolver, Settings.System.RINGTONE, randomUri.toString())
+            Settings.System.putString(contentResolver, Settings.System.RINGTONE, audioUri.toString())
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -587,16 +641,44 @@ class MainActivity : AppCompatActivity() {
             }
             // 알람이 설정되어 있으면 랜덤 알람 소리로 변경
             if (nextAlarm != null) {
-                val randomUri = alarmSelected.randomOrNull() ?: return
+                val selectedUri = alarmSelected.randomOrNull() ?: return
+                val audioUri = getRandomAudioFileFromUri(selectedUri) ?: return
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.System.canWrite(this)) {
                         return
                     }
                 }
-                Settings.System.putString(contentResolver, Settings.System.ALARM_ALERT, randomUri.toString())
+                Settings.System.putString(contentResolver, Settings.System.ALARM_ALERT, audioUri.toString())
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    private fun checkAndUpdateNotificationRingtone() {
+        if (notificationSelected.isEmpty()) return
+        try {
+            val selectedUri = notificationSelected.randomOrNull() ?: return
+            val audioUri = getRandomAudioFileFromUri(selectedUri) ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.System.canWrite(this)) {
+                    return
+                }
+            }
+            Settings.System.putString(contentResolver, Settings.System.NOTIFICATION_SOUND, audioUri.toString())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun requestNotificationListenerPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            val enabledListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+            val packageName = packageName
+            if (enabledListeners == null || !enabledListeners.contains(packageName)) {
+                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                startActivity(intent)
+            }
         }
     }
 
@@ -700,20 +782,24 @@ class MainActivity : AppCompatActivity() {
     private fun getCurrentPersistentSelected(): MutableSet<Uri> = when (currentCategory) {
         FolderCategory.RINGTONE -> ringtoneSelected
         FolderCategory.ALARM -> alarmSelected
+        FolderCategory.NOTIFICATION -> notificationSelected
     }
 
     private fun persistPersistentSelections() {
         val ring = JSONArray().apply { ringtoneSelected.forEach { put(it.toString()) } }.toString()
         val alarm = JSONArray().apply { alarmSelected.forEach { put(it.toString()) } }.toString()
+        val notification = JSONArray().apply { notificationSelected.forEach { put(it.toString()) } }.toString()
         preferences.edit()
             .putString(KEY_RINGTONE_SELECTED, ring)
             .putString(KEY_ALARM_SELECTED, alarm)
+            .putString(KEY_NOTIFICATION_SELECTED, notification)
             .apply()
     }
 
     private fun restorePersistentSelections() {
         ringtoneSelected.clear()
         alarmSelected.clear()
+        notificationSelected.clear()
         preferences.getString(KEY_RINGTONE_SELECTED, null)?.let {
             try {
                 val arr = JSONArray(it)
@@ -732,6 +818,15 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (_: Exception) { }
         }
+        preferences.getString(KEY_NOTIFICATION_SELECTED, null)?.let {
+            try {
+                val arr = JSONArray(it)
+                for (i in 0 until arr.length()) {
+                    val s = arr.optString(i, null) ?: continue
+                    notificationSelected.add(Uri.parse(s))
+                }
+            } catch (_: Exception) { }
+        }
     }
 
     private fun showAddChoiceDialog() {
@@ -746,7 +841,10 @@ class MainActivity : AppCompatActivity() {
                 when (which) {
                     0 -> startAddMultipleFoldersFlow()
                     1 -> openFilesLauncher.launch(arrayOf("audio/*"))
-                    2 -> openFolderAllFilesLauncher.launch(null)
+                    2 -> {
+                        pendingFolderCategory = currentCategory
+                        openFolderAllFilesLauncher.launch(null)
+                    }
                 }
             }
             .show()

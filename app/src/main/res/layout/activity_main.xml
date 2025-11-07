@@ -7,13 +7,25 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <ImageButton
+        android:id="@+id/menuButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/menu"
+        android:src="@drawable/ic_menu"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/categoryTabs"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/menuButton"
         app:layout_constraintTop_toTopOf="parent"
         app:tabIndicatorColor="?attr/colorPrimary"
         app:tabSelectedTextColor="@android:color/black"
@@ -26,6 +38,10 @@
         <com.google.android.material.tabs.TabItem
             android:id="@+id/alarmTab"
             android:text="@string/tab_alarm" />
+
+        <com.google.android.material.tabs.TabItem
+            android:id="@+id/notificationTab"
+            android:text="@string/tab_notification" />
     </com.google.android.material.tabs.TabLayout>
 
     <TextView
