@@ -92,6 +92,8 @@ class MainActivity : AppCompatActivity() {
         override fun run() {
             if (mediaPlayer != null && !isSeekBarUserDragging) {
                 updateSeekBar()
+                // 재생 중인 항목의 진행률 업데이트
+                folderAdapter.notifyDataSetChanged()
                 uiHandler.postDelayed(this, 500)
             }
         }
@@ -403,13 +405,56 @@ class MainActivity : AppCompatActivity() {
     
     private fun updateTabCounts() {
         val tabLayout = findViewById<TabLayout>(R.id.categoryTabs)
-        val ringtoneCount = ringtoneFolders.size
-        val alarmCount = alarmFolders.size
-        val notificationCount = notificationFolders.size
         
-        tabLayout.getTabAt(0)?.text = getString(R.string.tab_ringtone) + if (ringtoneCount > 0) " ($ringtoneCount)" else ""
-        tabLayout.getTabAt(1)?.text = getString(R.string.tab_alarm) + if (alarmCount > 0) " ($alarmCount)" else ""
-        tabLayout.getTabAt(2)?.text = getString(R.string.tab_notification) + if (notificationCount > 0) " ($notificationCount)" else ""
+        // Ringtone 탭
+        val ringtoneStats = calculateCategoryStats(ringtoneFolders, ringtoneSelected)
+        tabLayout.getTabAt(0)?.text = getString(R.string.tab_ringtone) + 
+            "(${ringtoneStats.selectedAudioCount}/${ringtoneStats.totalAudioCount}#${ringtoneStats.selectedFolderCount}/${ringtoneStats.totalFolderCount})"
+        
+        // Alarm 탭
+        val alarmStats = calculateCategoryStats(alarmFolders, alarmSelected)
+        tabLayout.getTabAt(1)?.text = getString(R.string.tab_alarm) + 
+            "(${alarmStats.selectedAudioCount}/${alarmStats.totalAudioCount}#${alarmStats.selectedFolderCount}/${alarmStats.totalFolderCount})"
+        
+        // Notification 탭
+        val notificationStats = calculateCategoryStats(notificationFolders, notificationSelected)
+        tabLayout.getTabAt(2)?.text = getString(R.string.tab_notification) + 
+            "(${notificationStats.selectedAudioCount}/${notificationStats.totalAudioCount}#${notificationStats.selectedFolderCount}/${notificationStats.totalFolderCount})"
+    }
+    
+    private data class CategoryStats(
+        val selectedAudioCount: Int,
+        val selectedFolderCount: Int,
+        val totalAudioCount: Int,
+        val totalFolderCount: Int
+    )
+    
+    private fun calculateCategoryStats(folders: List<Uri>, selected: Set<Uri>): CategoryStats {
+        var selectedAudioCount = 0
+        var selectedFolderCount = 0
+        var totalAudioCount = 0
+        var totalFolderCount = 0 //folders.size
+        
+        for (uri in folders) {
+            val asTree = DocumentFile.fromTreeUri(this, uri)
+            val asSingle = DocumentFile.fromSingleUri(this, uri)
+            
+            val isSelected = selected.contains(uri)
+            val isFile = asSingle != null && asSingle.isFile
+            val isFolder = asTree != null && asTree.isDirectory
+            
+            if (isFile) {
+                totalAudioCount++
+                if (isSelected) selectedAudioCount++
+            } else if (isFolder) {
+                //val audioCount = folderCounts[uri] ?: 0
+                //totalAudioCount += audioCount
+                totalFolderCount++
+                if (isSelected) selectedFolderCount++                
+            }
+        }
+        
+        return CategoryStats(selectedAudioCount, selectedFolderCount, totalAudioCount, totalFolderCount)
     }
 
     private fun setupSearchFilter() {
@@ -546,6 +591,10 @@ class MainActivity : AppCompatActivity() {
                     val set = getCurrentPersistentSelected()
                     if (isChecked) set.add(rowUriForCheck) else set.remove(rowUriForCheck)
                     persistPersistentSelections()
+                    // 재생창의 체크박스와 동기화
+                    if (rowUriForCheck == currentlyPlayingUri) {
+                        playerCheckBox.isChecked = isChecked
+                    }
                 }
             }
 
@@ -567,6 +616,9 @@ class MainActivity : AppCompatActivity() {
             }
 
             val uri = getUriForDisplayPosition(position)
+            val isCurrentlyPlaying = uri != null && uri == currentlyPlayingUri && mediaPlayer != null
+            val isPlaying = mediaPlayer?.isPlaying == true
+            
             if (uri != null) {
                 val asTree = DocumentFile.fromTreeUri(context, uri)
                 val asSingle = DocumentFile.fromSingleUri(context, uri)
@@ -574,8 +626,34 @@ class MainActivity : AppCompatActivity() {
                     asSingle != null && asSingle.isFile -> {
                         val duration = fileDurationsMs[uri]
                         countView.text = duration?.let { formatDuration(it) } ?: "…"
-                        container.background = null
-                        view.post {
+                        
+                        // 재생 중인 항목 강조
+                        if (isCurrentlyPlaying && isPlaying) {
+                            // 테두리 추가
+                            container.setBackgroundResource(R.drawable.border_playing)
+                            // 진행률에 따라 회색 배경 채우기
+                            val player = mediaPlayer
+                            if (player != null && player.duration > 0) {
+                                val progressPercent = (player.currentPosition * 100 / player.duration).coerceIn(0, 100)
+                                val containerWidth = container.width
+                                if (containerWidth > 0) {
+                                    val lp = progress.layoutParams
+                                    lp.width = (containerWidth * progressPercent / 100)
+                                    progress.layoutParams = lp
+                                } else {
+                                    // 컨테이너 너비가 아직 측정되지 않은 경우 post 사용
+                                    view.post {
+                                        val measuredWidth = container.width
+                                        if (measuredWidth > 0) {
+                                            val lp = progress.layoutParams
+                                            lp.width = (measuredWidth * progressPercent / 100)
+                                            progress.layoutParams = lp
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            container.background = null
                             val lp = progress.layoutParams
                             lp.width = 0
                             progress.layoutParams = lp
@@ -584,6 +662,21 @@ class MainActivity : AppCompatActivity() {
                     asTree != null && asTree.isDirectory -> {
                         val count = folderCounts[uri]
                         countView.text = count?.toString() ?: "…"
+                        
+                        // 재생 중인 항목 강조 (폴더는 진행률 표시 안함)
+                        if (isCurrentlyPlaying && isPlaying) {
+                            container.setBackgroundResource(R.drawable.border_playing)
+                        } else {
+                            container.background = null
+                        }
+                        view.post {
+                            val lp = progress.layoutParams
+                            lp.width = 0
+                            progress.layoutParams = lp
+                        }
+                    }
+                    else -> {
+                        countView.text = "…"
                         container.background = null
                         view.post {
                             val lp = progress.layoutParams
@@ -591,10 +684,15 @@ class MainActivity : AppCompatActivity() {
                             progress.layoutParams = lp
                         }
                     }
-                    else -> countView.text = "…"
                 }
             } else {
                 countView.text = "…"
+                container.background = null
+                view.post {
+                    val lp = progress.layoutParams
+                    lp.width = 0
+                    progress.layoutParams = lp
+                }
             }
 
 
@@ -603,6 +701,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleItemClickPlayback(uri: Uri) {
+        // 현재 재생 중인 항목을 다시 클릭하면 일시정지/재생
+        if (uri == currentlyPlayingUri && mediaPlayer != null) {
+            if (mediaPlayer!!.isPlaying) {
+                mediaPlayer!!.pause()
+                updatePlayPauseButtons()
+                stopProgressUpdater()
+            } else {
+                mediaPlayer!!.start()
+                updatePlayPauseButtons()
+                startProgressUpdater()
+            }
+            folderAdapter.notifyDataSetChanged()
+            return
+        }
+        
         val asTree = DocumentFile.fromTreeUri(this, uri)
         val asSingle = DocumentFile.fromSingleUri(this, uri)
         
@@ -641,6 +754,8 @@ class MainActivity : AppCompatActivity() {
                     if (duration > 0) {
                         val position = (progress * duration / 100)
                         mediaPlayer!!.seekTo(position)
+                        // 항목의 회색 백그라운드 위치 동기화
+                        folderAdapter.notifyDataSetChanged()
                     }
                 }
             }
@@ -661,6 +776,8 @@ class MainActivity : AppCompatActivity() {
                     set.remove(currentlyPlayingUri!!)
                 }
                 persistPersistentSelections()
+                // 항목의 체크박스와 동기화
+                folderAdapter.notifyDataSetChanged()
             }
         }
         
@@ -704,7 +821,11 @@ class MainActivity : AppCompatActivity() {
         // 체크박스 상태 업데이트
         playerCheckBox.isChecked = getCurrentPersistentSelected().contains(uri)
         
+        // 이전 미디어 플레이어 정리
+        stopProgressUpdater()
         mediaPlayer?.release()
+        mediaPlayer = null
+        
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -718,6 +839,8 @@ class MainActivity : AppCompatActivity() {
                 updatePlayPauseButtons()
                 updateSeekBar()
                 startProgressUpdater()
+                // 재생 중인 항목 강조를 위해 adapter 업데이트
+                folderAdapter.notifyDataSetChanged()
             }
             setOnCompletionListener {
                 // 다음 곡 자동 재생
@@ -727,12 +850,20 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     stopProgressUpdater()
                     updatePlayPauseButtons()
+                    folderAdapter.notifyDataSetChanged()
                 }
+            }
+            setOnErrorListener { _, what, extra ->
+                stopProgressUpdater()
+                updatePlayPauseButtons()
+                folderAdapter.notifyDataSetChanged()
+                true
             }
             prepareAsync()
         }
         
-        playerPanel.visibility = View.VISIBLE
+        // 재생 중인 항목 강조를 위해 adapter 업데이트
+        folderAdapter.notifyDataSetChanged()
     }
     
     private fun updateSeekBar() {

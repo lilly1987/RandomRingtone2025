@@ -7,228 +7,228 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <ImageButton
-        android:id="@+id/menuButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/menu"
-        android:src="@drawable/ic_menu"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/categoryTabs"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/menuButton"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tabIndicatorColor="?attr/colorPrimary"
-        app:tabSelectedTextColor="?attr/colorOnSurface"
-        app:tabTextColor="?attr/colorOnSurfaceVariant">
-
-        <com.google.android.material.tabs.TabItem
-            android:id="@+id/ringtoneTab"
-            android:text="@string/tab_ringtone" />
-
-        <com.google.android.material.tabs.TabItem
-            android:id="@+id/alarmTab"
-            android:text="@string/tab_alarm" />
-
-        <com.google.android.material.tabs.TabItem
-            android:id="@+id/notificationTab"
-            android:text="@string/tab_notification" />
-    </com.google.android.material.tabs.TabLayout>
-
-    <TextView
-        android:id="@+id/emptyMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/empty_folder_list"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/addFolderButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
-
-    <TextView
-        android:id="@+id/loadingMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/loading"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/searchEditText"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
-
-    <ListView
-        android:id="@+id/folderListView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="0dp"
-        android:fadeScrollbars="false"
-        android:fastScrollEnabled="true"
-        android:scrollbars="vertical"
-        app:layout_constraintBottom_toTopOf="@id/playerPanel"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
-
-    <EditText
-        android:id="@+id/searchEditText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginEnd="80dp"
-        android:layout_marginBottom="8dp"
-        android:hint="@string/search_hint"
-        android:inputType="text"
-        android:imeOptions="actionSearch"
-        android:background="?attr/colorSurface"
-        android:padding="12dp"
-        android:textColor="?attr/colorOnSurface"
-        android:textColorHint="?attr/colorOnSurfaceVariant"
-        app:layout_constraintBottom_toTopOf="@id/playerPanel"
-        app:layout_constraintEnd_toStartOf="@id/addFolderButton"
-        app:layout_constraintStart_toEndOf="@id/deleteSelectedButton"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <!-- 플레이어 창 -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/playerPanel"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="?attr/colorSurface"
-        android:padding="8dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.1"
-        app:layout_constraintStart_toStartOf="parent">
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-        <!-- 첫 번째 줄: 재생 위치 조정바 -->
-        <SeekBar
-            android:id="@+id/playerSeekBar"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
+        <ImageButton
+            android:id="@+id/menuButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/menu"
+            android:src="@drawable/ic_menu"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- 두 번째 줄: 체크박스, 이전곡, 일시정지, 재생, 다음곡 -->
-        <LinearLayout
-            android:id="@+id/playerControlsLayout"
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/categoryTabs"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:background="?attr/colorSurface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/menuButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tabIndicatorColor="?attr/colorPrimary"
+            app:tabSelectedTextColor="?attr/colorOnSurface"
+            app:tabTextColor="?attr/colorOnSurfaceVariant">
+
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/ringtoneTab"
+                android:text="@string/tab_ringtone" />
+
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/alarmTab"
+                android:text="@string/tab_alarm" />
+
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/notificationTab"
+                android:text="@string/tab_notification" />
+        </com.google.android.material.tabs.TabLayout>
+
+        <TextView
+            android:id="@+id/emptyMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/empty_folder_list"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/addFolderButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/playerSeekBar">
+            app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
 
-            <CheckBox
-                android:id="@+id/playerCheckBox"
-                android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/loadingMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/loading"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/playerPanel"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
+
+        <ListView
+            android:id="@+id/folderListView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="0dp"
+            android:layout_marginBottom="560dp"
+            android:fadeScrollbars="false"
+            android:fastScrollEnabled="true"
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/searchEditText"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
+
+        <!-- 플레이어 창 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/playerPanel"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="80dp"
+            android:layout_marginEnd="80dp"
+            android:background="?attr/colorSurface"
+            android:padding="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_percent="0.1"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <!-- 검색창 -->
+
+            <!-- 첫 번째 줄: 재생 위치 조정바 -->
+            <SeekBar
+                android:id="@+id/playerSeekBar"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:focusable="false"
-                android:focusableInTouchMode="false" />
+                android:layout_marginBottom="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/searchEditText" />
 
-            <ImageButton
-                android:id="@+id/playerPreviousButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/previous"
-                android:src="@drawable/ic_skip_previous" />
+            <!-- 두 번째 줄: 체크박스, 이전곡, 일시정지, 재생, 다음곡 -->
+            <LinearLayout
+                android:id="@+id/playerControlsLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/playerSeekBar">
 
-            <ImageButton
-                android:id="@+id/playerPauseButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/pause"
-                android:src="@drawable/ic_pause"
-                android:visibility="gone" />
+                <CheckBox
+                    android:id="@+id/playerCheckBox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false" />
 
-            <ImageButton
-                android:id="@+id/playerPlayButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/play"
-                android:src="@drawable/ic_play" />
+                <ImageButton
+                    android:id="@+id/playerPreviousButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/previous"
+                    android:src="@drawable/ic_skip_previous" />
 
-            <ImageButton
-                android:id="@+id/playerNextButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/next"
-                android:src="@drawable/ic_skip_next" />
+                <ImageButton
+                    android:id="@+id/playerPauseButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/pause"
+                    android:src="@drawable/ic_pause"
+                    android:visibility="gone" />
 
-        </LinearLayout>
+                <ImageButton
+                    android:id="@+id/playerPlayButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/play"
+                    android:src="@drawable/ic_play" />
+
+                <ImageButton
+                    android:id="@+id/playerNextButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/next"
+                    android:src="@drawable/ic_skip_next" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- 일반 모드: 우측 하단 추가 버튼 -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/addFolderButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:contentDescription="@string/add_folder"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_add"
+            app:tint="@android:color/white" />
+
+        <!-- 일반 모드: 좌측 하단 휴지통 버튼 -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/deleteSelectedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/delete_selected"
+            android:visibility="gone"
+            app:backgroundTint="#F44336"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:srcCompat="@drawable/ic_delete"
+            app:tint="@android:color/white" />
+
+        <!-- 삭제 모드: 우측 하단 취소 버튼 -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/cancelSelectionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/cancel_selection"
+            android:visibility="gone"
+            app:backgroundTint="#F44336"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_close"
+            app:tint="@android:color/white" />
+
+        <EditText
+            android:id="@+id/searchEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            android:hint="@string/search_hint"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:padding="12dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?attr/colorOnSurfaceVariant"
+            app:layout_constraintBottom_toTopOf="@+id/playerPanel"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 일반 모드: 우측 하단 추가 버튼 -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/addFolderButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:contentDescription="@string/add_folder"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_add"
-        app:tint="@android:color/white" />
-
-    <!-- 일반 모드: 좌측 하단 휴지통 버튼 -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/deleteSelectedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="8dp"
-        android:contentDescription="@string/delete_selected"
-        android:visibility="gone"
-        app:backgroundTint="#F44336"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/ic_delete"
-        app:tint="@android:color/white" />
-
-    <!-- 삭제 모드: 우측 하단 취소 버튼 -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/cancelSelectionButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:contentDescription="@string/cancel_selection"
-        android:visibility="gone"
-        app:backgroundTint="#F44336"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_close"
-        app:tint="@android:color/white" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
-
-<include
+    <include
     android:id="@+id/navDrawer"
     layout="@layout/nav_drawer"
     android:layout_width="280dp"
