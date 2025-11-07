@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity() {
     private val notificationFolders = mutableListOf<Uri>()
     private val displayList = mutableListOf<String>()
     private val originalDisplayList = mutableListOf<String>()
+    private enum class FilterMode { ALL, CHECKED, UNCHECKED }
+    private var currentFilterMode = FilterMode.ALL
     private lateinit var folderAdapter: FolderAdapter
     private lateinit var folderListView: ListView
     private lateinit var emptyMessageView: TextView
@@ -78,6 +80,8 @@ class MainActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var autoScrollOnTrackChange = true
     private var autoPlayNext = true
+    private var hideSearchBar = false
+    private var hideFilterOptions = false
     private var drawerAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>? = null
     private val longPressHandlers = mutableMapOf<Int, Runnable>()
     private var isRefreshingCounts = false
@@ -273,6 +277,8 @@ class MainActivity : AppCompatActivity() {
         preferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
         autoScrollOnTrackChange = preferences.getBoolean(KEY_AUTO_SCROLL_ON_TRACK_CHANGE, true)
         autoPlayNext = preferences.getBoolean(KEY_AUTO_PLAY_NEXT, true)
+        hideSearchBar = preferences.getBoolean(KEY_HIDE_SEARCH_BAR, false)
+        hideFilterOptions = preferences.getBoolean(KEY_HIDE_FILTER_OPTIONS, false)
 
         emptyMessageView = findViewById(R.id.emptyMessage)
         loadingMessageView = findViewById(R.id.loadingMessage)
@@ -300,6 +306,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupSearchFilter()
+        setupFilterOptions()
+        updateVisibilitySettings()
 
         val tabLayout = findViewById<TabLayout>(R.id.categoryTabs)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
@@ -370,9 +378,18 @@ class MainActivity : AppCompatActivity() {
 
         setupDrawerLayout()
 
-        findViewById<android.widget.ImageButton>(R.id.menuButton).setOnClickListener {
-            findViewById<DrawerLayout>(R.id.drawerLayout).openDrawer(androidx.core.view.GravityCompat.START)
+        val menuButton = findViewById<android.widget.ImageButton>(R.id.menuButton)
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
+        
+        // 메뉴 버튼은 항상 활성화 (로딩 중에도 사용 가능)
+        menuButton.isEnabled = true
+        menuButton.isClickable = true
+        menuButton.setOnClickListener {
+            drawerLayout.openDrawer(androidx.core.view.GravityCompat.START)
         }
+        
+        // DrawerLayout은 항상 열 수 있도록 설정 (로딩 중에도 사용 가능)
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
 
         findViewById<FloatingActionButton>(R.id.addFolderButton).setOnClickListener {
             showAddChoiceDialog()
@@ -615,10 +632,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun applySearchFilter() {
         displayList.clear()
+        val currentList = getCurrentFolderList()
+        val selectedSet = getCurrentPersistentSelected()
+        
+        // 필터 모드에 따라 필터링
+        val filteredList = when (currentFilterMode) {
+            FilterMode.ALL -> originalDisplayList
+            FilterMode.CHECKED -> {
+                originalDisplayList.filter { name ->
+                    val uri = currentList.find { getDisplayName(it) == name }
+                    uri != null && selectedSet.contains(uri)
+                }
+            }
+            FilterMode.UNCHECKED -> {
+                originalDisplayList.filter { name ->
+                    val uri = currentList.find { getDisplayName(it) == name }
+                    uri == null || !selectedSet.contains(uri)
+                }
+            }
+        }
+        
+        // 검색 쿼리 적용
         if (searchQuery.isEmpty()) {
-            displayList.addAll(originalDisplayList)
+            displayList.addAll(filteredList)
         } else {
-            originalDisplayList.forEach { name ->
+            filteredList.forEach { name ->
                 if (name.lowercase().contains(searchQuery)) {
                     displayList.add(name)
                 }
@@ -626,6 +664,47 @@ class MainActivity : AppCompatActivity() {
         }
         folderAdapter.notifyDataSetChanged()
         updateEmptyState()
+    }
+    
+    private fun setupFilterOptions() {
+        val filterRadioGroup = findViewById<android.widget.RadioGroup>(R.id.filterRadioGroup)
+        val filterAll = findViewById<android.widget.RadioButton>(R.id.filterAll)
+        val filterChecked = findViewById<android.widget.RadioButton>(R.id.filterChecked)
+        val filterUnchecked = findViewById<android.widget.RadioButton>(R.id.filterUnchecked)
+        
+        filterRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            currentFilterMode = when (checkedId) {
+                R.id.filterAll -> FilterMode.ALL
+                R.id.filterChecked -> FilterMode.CHECKED
+                R.id.filterUnchecked -> FilterMode.UNCHECKED
+                else -> FilterMode.ALL
+            }
+            applySearchFilter()
+        }
+    }
+    
+    private fun updateVisibilitySettings() {
+        val filterRadioGroup = findViewById<android.widget.RadioGroup>(R.id.filterRadioGroup)
+        filterRadioGroup.visibility = if (hideFilterOptions) View.GONE else View.VISIBLE
+        searchEditText.visibility = if (hideSearchBar) View.GONE else View.VISIBLE
+        
+        // 레이아웃 제약 조건 업데이트
+        val constraintSet = androidx.constraintlayout.widget.ConstraintSet()
+        constraintSet.clone(findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main))
+        
+        // ListView 상단 제약 조건 업데이트
+        val listViewTopConstraint = if (hideFilterOptions) R.id.categoryTabs else R.id.filterRadioGroup
+        constraintSet.connect(R.id.folderListView, androidx.constraintlayout.widget.ConstraintSet.TOP, listViewTopConstraint, androidx.constraintlayout.widget.ConstraintSet.BOTTOM)
+        
+        // ListView 하단 제약 조건 업데이트
+        val listViewBottomConstraint = if (hideSearchBar) R.id.playerPanel else R.id.searchEditText
+        constraintSet.connect(R.id.folderListView, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, listViewBottomConstraint, androidx.constraintlayout.widget.ConstraintSet.TOP)
+        
+        // emptyMessage와 loadingMessage 제약 조건도 업데이트
+        constraintSet.connect(R.id.emptyMessage, androidx.constraintlayout.widget.ConstraintSet.TOP, listViewTopConstraint, androidx.constraintlayout.widget.ConstraintSet.BOTTOM)
+        constraintSet.connect(R.id.loadingMessage, androidx.constraintlayout.widget.ConstraintSet.TOP, listViewTopConstraint, androidx.constraintlayout.widget.ConstraintSet.BOTTOM)
+        
+        constraintSet.applyTo(findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main))
     }
 
     private fun getUriForDisplayPosition(position: Int): Uri? {
@@ -759,6 +838,8 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_AUTO_PLAY_NEXT = "auto_play_next"
         private const val KEY_FOLDER_COUNTS_CACHE = "folder_counts_cache"
         private const val KEY_FILE_DURATIONS_CACHE = "file_durations_cache"
+        private const val KEY_HIDE_SEARCH_BAR = "hide_search_bar"
+        private const val KEY_HIDE_FILTER_OPTIONS = "hide_filter_options"
     }
 
     private enum class FolderCategory {
@@ -784,20 +865,22 @@ class MainActivity : AppCompatActivity() {
                 checkBox.isChecked = rowUriForCheck != null && getCurrentPersistentSelected().contains(rowUriForCheck)
             }
             checkBox.visibility = View.VISIBLE
-            checkBox.setOnCheckedChangeListener { _, isChecked ->
-                if (selectionMode) {
-                    if (isChecked) deleteSelectedPositions.add(position) else deleteSelectedPositions.remove(position)
-                    updateEmptyState()
-                } else if (rowUriForCheck != null) {
-                    val set = getCurrentPersistentSelected()
-                    if (isChecked) set.add(rowUriForCheck) else set.remove(rowUriForCheck)
-                    persistPersistentSelections()
-                    // 재생창의 체크박스와 동기화
-                    if (rowUriForCheck == currentlyPlayingUri) {
-                        playerCheckBox.isChecked = isChecked
+                    checkBox.setOnCheckedChangeListener { _, isChecked ->
+                        if (selectionMode) {
+                            if (isChecked) deleteSelectedPositions.add(position) else deleteSelectedPositions.remove(position)
+                            updateEmptyState()
+                        } else if (rowUriForCheck != null) {
+                            val set = getCurrentPersistentSelected()
+                            if (isChecked) set.add(rowUriForCheck) else set.remove(rowUriForCheck)
+                            persistPersistentSelections()
+                            // 필터 모드에 따라 목록 업데이트
+                            applySearchFilter()
+                            // 재생창의 체크박스와 동기화
+                            if (rowUriForCheck == currentlyPlayingUri) {
+                                playerCheckBox.isChecked = isChecked
+                            }
+                        }
                     }
-                }
-            }
 
             view.setOnClickListener {
                 if (selectionMode) {
@@ -1001,6 +1084,8 @@ class MainActivity : AppCompatActivity() {
                     set.remove(currentlyPlayingUri!!)
                 }
                 persistPersistentSelections()
+                // 필터 모드에 따라 목록 업데이트
+                applySearchFilter()
                 // 항목의 체크박스와 동기화
                 folderAdapter.notifyDataSetChanged()
             }
@@ -1653,7 +1738,9 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.load_playlist),
             getString(R.string.manual),
             getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)",
-            getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)"
+            getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)",
+            getString(R.string.hide_search_bar) + if (hideSearchBar) " (ON)" else " (OFF)",
+            getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)"
         )
         val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -1670,6 +1757,8 @@ class MainActivity : AppCompatActivity() {
                     3 -> textView.text = getString(R.string.manual)
                     4 -> textView.text = getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)"
                     5 -> textView.text = getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)"
+                    6 -> textView.text = getString(R.string.hide_search_bar) + if (hideSearchBar) " (ON)" else " (OFF)"
+                    7 -> textView.text = getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)"
                     else -> textView.text = menuItems[position]
                 }
                 holder.itemView.setOnClickListener {
@@ -1692,6 +1781,20 @@ class MainActivity : AppCompatActivity() {
                             autoPlayNext = !autoPlayNext
                             preferences.edit().putBoolean(KEY_AUTO_PLAY_NEXT, autoPlayNext).apply()
                             drawerAdapter?.notifyItemChanged(5)
+                        }
+                        6 -> {
+                            // 하단 검색창 숨기기 토글
+                            hideSearchBar = !hideSearchBar
+                            preferences.edit().putBoolean(KEY_HIDE_SEARCH_BAR, hideSearchBar).apply()
+                            drawerAdapter?.notifyItemChanged(6)
+                            updateVisibilitySettings()
+                        }
+                        7 -> {
+                            // 상단 옵션창 숨기기 토글
+                            hideFilterOptions = !hideFilterOptions
+                            preferences.edit().putBoolean(KEY_HIDE_FILTER_OPTIONS, hideFilterOptions).apply()
+                            drawerAdapter?.notifyItemChanged(7)
+                            updateVisibilitySettings()
                         }
                     }
                     drawerLayout.closeDrawer(GravityCompat.START)

@@ -48,4 +48,6 @@
     <string name="filter_all">전체</string>
     <string name="filter_checked">체크한것만</string>
     <string name="filter_unchecked">체크안한것만</string>
+    <string name="hide_search_bar"># 하단 검색창 숨기기</string>
+    <string name="hide_filter_options"># 상단 옵션창 숨기기</string>
 </resources>

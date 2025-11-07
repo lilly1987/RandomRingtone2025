@@ -51,11 +51,11 @@
         <RadioGroup
             android:id="@+id/filterRadioGroup"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:padding="8dp"
+            android:layout_height="40dp"
             android:background="?attr/colorSurface"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="0dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/categoryTabs">
@@ -63,29 +63,29 @@
             <RadioButton
                 android:id="@+id/filterAll"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="@string/filter_all"
                 android:checked="true"
                 android:gravity="center"
+                android:text="@string/filter_all"
                 android:textColor="?attr/colorOnSurface" />
 
             <RadioButton
                 android:id="@+id/filterChecked"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="@string/filter_checked"
                 android:gravity="center"
+                android:text="@string/filter_checked"
                 android:textColor="?attr/colorOnSurface" />
 
             <RadioButton
                 android:id="@+id/filterUnchecked"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="@string/filter_unchecked"
                 android:gravity="center"
+                android:text="@string/filter_unchecked"
                 android:textColor="?attr/colorOnSurface" />
 
         </RadioGroup>
@@ -123,7 +123,7 @@
             app:layout_constraintBottom_toTopOf="@+id/searchEditText"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/categoryTabs" />
+            app:layout_constraintTop_toBottomOf="@id/filterRadioGroup" />
 
         <!-- 플레이어 창 -->
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -285,12 +285,12 @@
         <EditText
             android:id="@+id/searchEditText"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:background="?attr/colorSurface"
             android:hint="@string/search_hint"
             android:imeOptions="actionSearch"
             android:inputType="text"
-            android:padding="12dp"
+            android:padding="0dp"
             android:textColor="?attr/colorOnSurface"
             android:textColorHint="?attr/colorOnSurfaceVariant"
             app:layout_constraintBottom_toTopOf="@+id/playerPanel"
