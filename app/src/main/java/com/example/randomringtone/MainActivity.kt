@@ -1062,12 +1062,23 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // 검색 쿼리 적용 (와일드카드 지원)
+        // 검색 쿼리 적용 (와일드카드 지원, 자동으로 양끝에 * 추가)
         if (searchQuery.isEmpty()) {
             currentDisplayList.addAll(filteredList)
         } else {
+            // 검색 쿼리 양끝에 자동으로 * 추가 (이미 *가 있으면 중복 방지)
+            val processedQuery = buildString {
+                if (!searchQuery.startsWith("*")) {
+                    append("*")
+                }
+                append(searchQuery)
+                if (!searchQuery.endsWith("*")) {
+                    append("*")
+                }
+            }
+            
             filteredList.forEach { name ->
-                if (matchesWildcard(name.lowercase(), searchQuery)) {
+                if (matchesWildcard(name.lowercase(), processedQuery)) {
                     currentDisplayList.add(name)
                 }
             }
@@ -2481,6 +2492,7 @@ class MainActivity : AppCompatActivity() {
                     else -> textView.text = menuItems[position]
                 }
                 holder.itemView.setOnClickListener {
+                    var shouldCloseDrawer = true
                     when (position) {
                         0 -> createDocumentLauncher.launch("RandomRingtone_backup.json")
                         1 -> openDocumentLauncher.launch(arrayOf("application/json", "*/*"))
@@ -2494,12 +2506,14 @@ class MainActivity : AppCompatActivity() {
                             autoScrollOnTrackChange = !autoScrollOnTrackChange
                             preferences.edit().putBoolean(KEY_AUTO_SCROLL_ON_TRACK_CHANGE, autoScrollOnTrackChange).apply()
                             drawerAdapter?.notifyItemChanged(4)
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                         5 -> {
                             // 곡 자동으로 넘기기 토글
                             autoPlayNext = !autoPlayNext
                             preferences.edit().putBoolean(KEY_AUTO_PLAY_NEXT, autoPlayNext).apply()
                             drawerAdapter?.notifyItemChanged(5)
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                         6 -> {
                             // 하단 검색창 숨기기 토글
@@ -2507,6 +2521,7 @@ class MainActivity : AppCompatActivity() {
                             preferences.edit().putBoolean(KEY_HIDE_SEARCH_BAR, hideSearchBar).apply()
                             drawerAdapter?.notifyItemChanged(6)
                             updateVisibilitySettings()
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                         7 -> {
                             // 상단 옵션창 숨기기 토글
@@ -2514,6 +2529,7 @@ class MainActivity : AppCompatActivity() {
                             preferences.edit().putBoolean(KEY_HIDE_FILTER_OPTIONS, hideFilterOptions).apply()
                             drawerAdapter?.notifyItemChanged(7)
                             updateVisibilitySettings()
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                         8 -> {
                             // 전체 체크/체크해제 버튼 숨기기 토글
@@ -2521,9 +2537,12 @@ class MainActivity : AppCompatActivity() {
                             preferences.edit().putBoolean(KEY_HIDE_CHECK_ALL_BUTTONS, hideCheckAllButtons).apply()
                             drawerAdapter?.notifyItemChanged(8)
                             updateVisibilitySettings()
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                     }
-                    drawerLayout.closeDrawer(GravityCompat.START)
+                    if (shouldCloseDrawer) {
+                        drawerLayout.closeDrawer(GravityCompat.START)
+                    }
                 }
             }
 
