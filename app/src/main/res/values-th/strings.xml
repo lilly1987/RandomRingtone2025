@@ -24,5 +24,37 @@
     <string name="delete_all_message">ลบรายการทั้งหมดในแท็บปัจจุบัน?</string>
     <string name="cancel_selection">ยกเลิกการเลือก</string>
     <string name="menu">เมนู</string>
+    <string name="export">ส่งออก</string>
+    <string name="export_success">ส่งออกเสร็จสมบูรณ์</string>
+    <string name="export_error">ส่งออกล้มเหลว</string>
+    <string name="import1">นำเข้า</string>
+    <string name="import_success">นำเข้าเสร็จสมบูรณ์</string>
+    <string name="import_error">นำเข้าล้มเหลว</string>
+    <string name="import_invalid_file">ไฟล์ไม่ถูกต้อง</string>
+    <string name="search_hint">ค้นหา...</string>
+    <string name="loading">กำลังโหลด...</string>
+    <string name="loading_progress">กำลังโหลด... %1$d/%2$d</string>
+    <string name="manual">คู่มือ</string>
+    <string name="manual_title">คู่มือ</string>
+    <string name="play">เล่น</string>
+    <string name="pause">หยุดชั่วคราว</string>
+    <string name="previous">ก่อนหน้า</string>
+    <string name="next">ถัดไป</string>
+    <string name="load_playlist">โหลดเพลย์ลิสต์</string>
+    <string name="adding_items">กำลังเพิ่มรายการ...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># เลื่อนอัตโนมัติเมื่อเปลี่ยนแทร็ก</string>
+    <string name="auto_play_next"># เล่นถัดไปอัตโนมัติ</string>
+    <string name="filter_all">ทั้งหมด</string>
+    <string name="filter_checked">เฉพาะที่เลือก</string>
+    <string name="filter_unchecked">เฉพาะที่ไม่ได้เลือก</string>
+    <string name="hide_search_bar"># ซ่อนแถบค้นหา</string>
+    <string name="hide_filter_options"># ซ่อนตัวเลือกตัวกรอง</string>
+    <string name="check_all">เลือกทั้งหมด</string>
+    <string name="uncheck_all">ยกเลิกการเลือกทั้งหมด</string>
+    <string name="hide_check_all_buttons"># ซ่อนปุ่มเลือก</string>
+    <string name="auto_apply_ringtone"># ใช้เสียงเรียกเข้าโดยอัตโนมัติ</string>
+    <string name="auto_apply_alarm"># ใช้นาฬิกาปลุกโดยอัตโนมัติ</string>
+    <string name="auto_apply_notification"># ใช้การแจ้งเตือนโดยอัตโนมัติ</string>
 </resources>
 

@@ -24,5 +24,37 @@
     <string name="delete_all_message">Mevcut sekmedeki tüm öğeler silinsin mi?</string>
     <string name="cancel_selection">Seçimi İptal Et</string>
     <string name="menu">Menü</string>
+    <string name="export">Dışa Aktar</string>
+    <string name="export_success">Dışa aktarma tamamlandı</string>
+    <string name="export_error">Dışa aktarma başarısız</string>
+    <string name="import1">İçe Aktar</string>
+    <string name="import_success">İçe aktarma tamamlandı</string>
+    <string name="import_error">İçe aktarma başarısız</string>
+    <string name="import_invalid_file">Geçersiz dosya</string>
+    <string name="search_hint">Ara...</string>
+    <string name="loading">Yükleniyor...</string>
+    <string name="loading_progress">Yükleniyor... %1$d/%2$d</string>
+    <string name="manual">Kılavuz</string>
+    <string name="manual_title">Kılavuz</string>
+    <string name="play">Oynat</string>
+    <string name="pause">Duraklat</string>
+    <string name="previous">Önceki</string>
+    <string name="next">Sonraki</string>
+    <string name="load_playlist">Çalma listesini yükle</string>
+    <string name="adding_items">Öğeler ekleniyor...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># Parça değiştiğinde otomatik kaydır</string>
+    <string name="auto_play_next"># Sonrakini otomatik oynat</string>
+    <string name="filter_all">Tümü</string>
+    <string name="filter_checked">Yalnızca seçili</string>
+    <string name="filter_unchecked">Yalnızca seçilmemiş</string>
+    <string name="hide_search_bar"># Arama çubuğunu gizle</string>
+    <string name="hide_filter_options"># Filtre seçeneklerini gizle</string>
+    <string name="check_all">Tümünü seç</string>
+    <string name="uncheck_all">Tümünün seçimini kaldır</string>
+    <string name="hide_check_all_buttons"># Seçim düğmelerini gizle</string>
+    <string name="auto_apply_ringtone"># Zil sesini otomatik uygula</string>
+    <string name="auto_apply_alarm"># Alarmı otomatik uygula</string>
+    <string name="auto_apply_notification"># Bildirimi otomatik uygula</string>
 </resources>
 

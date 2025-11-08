@@ -24,5 +24,37 @@
     <string name="delete_all_message">刪除目前標籤頁的所有項？</string>
     <string name="cancel_selection">取消選擇</string>
     <string name="menu">選單</string>
+    <string name="export">匯出</string>
+    <string name="export_success">匯出完成</string>
+    <string name="export_error">匯出失敗</string>
+    <string name="import1">匯入</string>
+    <string name="import_success">匯入完成</string>
+    <string name="import_error">匯入失敗</string>
+    <string name="import_invalid_file">無效的檔案</string>
+    <string name="search_hint">搜尋...</string>
+    <string name="loading">載入中...</string>
+    <string name="loading_progress">載入中... %1$d/%2$d</string>
+    <string name="manual">說明書</string>
+    <string name="manual_title">說明書</string>
+    <string name="play">播放</string>
+    <string name="pause">暫停</string>
+    <string name="previous">上一首</string>
+    <string name="next">下一首</string>
+    <string name="load_playlist">載入播放清單</string>
+    <string name="adding_items">正在新增項目...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># 切換曲目時自動捲動</string>
+    <string name="auto_play_next"># 自動播放下一首</string>
+    <string name="filter_all">全部</string>
+    <string name="filter_checked">僅已選中</string>
+    <string name="filter_unchecked">僅未選中</string>
+    <string name="hide_search_bar"># 隱藏搜尋欄</string>
+    <string name="hide_filter_options"># 隱藏篩選選項</string>
+    <string name="check_all">全選</string>
+    <string name="uncheck_all">全不選</string>
+    <string name="hide_check_all_buttons"># 隱藏全選/全不選按鈕</string>
+    <string name="auto_apply_ringtone"># 自動套用鈴聲</string>
+    <string name="auto_apply_alarm"># 自動套用鬧鐘</string>
+    <string name="auto_apply_notification"># 自動套用通知</string>
 </resources>
 

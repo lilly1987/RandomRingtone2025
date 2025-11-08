@@ -53,4 +53,7 @@
     <string name="check_all">전체 체크</string>
     <string name="uncheck_all">전체 체크해제</string>
     <string name="hide_check_all_buttons"># 전체 체크/체크해제 버튼 숨기기</string>
+    <string name="auto_apply_ringtone"># 벨소리 자동적용</string>
+    <string name="auto_apply_alarm"># 알람 자동적용</string>
+    <string name="auto_apply_notification"># 알림 자동적용</string>
 </resources>

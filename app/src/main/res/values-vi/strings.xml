@@ -24,5 +24,37 @@
     <string name="delete_all_message">Xóa tất cả các mục trong tab hiện tại?</string>
     <string name="cancel_selection">Hủy chọn</string>
     <string name="menu">Menu</string>
+    <string name="export">Xuất</string>
+    <string name="export_success">Xuất hoàn tất</string>
+    <string name="export_error">Xuất thất bại</string>
+    <string name="import1">Nhập</string>
+    <string name="import_success">Nhập hoàn tất</string>
+    <string name="import_error">Nhập thất bại</string>
+    <string name="import_invalid_file">Tệp không hợp lệ</string>
+    <string name="search_hint">Tìm kiếm...</string>
+    <string name="loading">Đang tải...</string>
+    <string name="loading_progress">Đang tải... %1$d/%2$d</string>
+    <string name="manual">Hướng dẫn</string>
+    <string name="manual_title">Hướng dẫn</string>
+    <string name="play">Phát</string>
+    <string name="pause">Tạm dừng</string>
+    <string name="previous">Trước</string>
+    <string name="next">Tiếp theo</string>
+    <string name="load_playlist">Tải danh sách phát</string>
+    <string name="adding_items">Đang thêm mục...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># Tự động cuộn khi chuyển bài</string>
+    <string name="auto_play_next"># Tự động phát bài tiếp theo</string>
+    <string name="filter_all">Tất cả</string>
+    <string name="filter_checked">Chỉ đã chọn</string>
+    <string name="filter_unchecked">Chỉ chưa chọn</string>
+    <string name="hide_search_bar"># Ẩn thanh tìm kiếm</string>
+    <string name="hide_filter_options"># Ẩn tùy chọn bộ lọc</string>
+    <string name="check_all">Chọn tất cả</string>
+    <string name="uncheck_all">Bỏ chọn tất cả</string>
+    <string name="hide_check_all_buttons"># Ẩn nút chọn</string>
+    <string name="auto_apply_ringtone"># Tự động áp dụng nhạc chuông</string>
+    <string name="auto_apply_alarm"># Tự động áp dụng báo thức</string>
+    <string name="auto_apply_notification"># Tự động áp dụng thông báo</string>
 </resources>
 

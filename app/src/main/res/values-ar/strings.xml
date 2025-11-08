@@ -24,5 +24,37 @@
     <string name="delete_all_message">حذف جميع العناصر في التبويب الحالي؟</string>
     <string name="cancel_selection">إلغاء التحديد</string>
     <string name="menu">القائمة</string>
+    <string name="export">تصدير</string>
+    <string name="export_success">اكتمل التصدير</string>
+    <string name="export_error">فشل التصدير</string>
+    <string name="import1">استيراد</string>
+    <string name="import_success">اكتمل الاستيراد</string>
+    <string name="import_error">فشل الاستيراد</string>
+    <string name="import_invalid_file">ملف غير صالح</string>
+    <string name="search_hint">بحث...</string>
+    <string name="loading">جاري التحميل...</string>
+    <string name="loading_progress">جاري التحميل... %1$d/%2$d</string>
+    <string name="manual">دليل</string>
+    <string name="manual_title">دليل</string>
+    <string name="play">تشغيل</string>
+    <string name="pause">إيقاف مؤقت</string>
+    <string name="previous">السابق</string>
+    <string name="next">التالي</string>
+    <string name="load_playlist">تحميل قائمة التشغيل</string>
+    <string name="adding_items">جاري إضافة العناصر...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># التمرير التلقائي عند تغيير المسار</string>
+    <string name="auto_play_next"># التشغيل التلقائي للتالي</string>
+    <string name="filter_all">الكل</string>
+    <string name="filter_checked">المحدد فقط</string>
+    <string name="filter_unchecked">غير المحدد فقط</string>
+    <string name="hide_search_bar"># إخفاء شريط البحث</string>
+    <string name="hide_filter_options"># إخفاء خيارات التصفية</string>
+    <string name="check_all">تحديد الكل</string>
+    <string name="uncheck_all">إلغاء تحديد الكل</string>
+    <string name="hide_check_all_buttons"># إخفاء أزرار التحديد</string>
+    <string name="auto_apply_ringtone"># تطبيق النغمة تلقائياً</string>
+    <string name="auto_apply_alarm"># تطبيق المنبه تلقائياً</string>
+    <string name="auto_apply_notification"># تطبيق الإشعار تلقائياً</string>
 </resources>
 

@@ -24,5 +24,37 @@
     <string name="delete_all_message">Supprimer tous les éléments de l\'onglet actuel?</string>
     <string name="cancel_selection">Annuler la sélection</string>
     <string name="menu">Menu</string>
+    <string name="export">Exporter</string>
+    <string name="export_success">Exportation terminée</string>
+    <string name="export_error">Exportation échouée</string>
+    <string name="import1">Importer</string>
+    <string name="import_success">Importation terminée</string>
+    <string name="import_error">Importation échouée</string>
+    <string name="import_invalid_file">Fichier invalide</string>
+    <string name="search_hint">Rechercher...</string>
+    <string name="loading">Chargement...</string>
+    <string name="loading_progress">Chargement... %1$d/%2$d</string>
+    <string name="manual">Manuel</string>
+    <string name="manual_title">Manuel</string>
+    <string name="play">Lire</string>
+    <string name="pause">Pause</string>
+    <string name="previous">Précédent</string>
+    <string name="next">Suivant</string>
+    <string name="load_playlist">Charger la liste de lecture</string>
+    <string name="adding_items">Ajout d\'éléments...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># Défilement automatique lors du changement de piste</string>
+    <string name="auto_play_next"># Lecture automatique du suivant</string>
+    <string name="filter_all">Tous</string>
+    <string name="filter_checked">Cochés uniquement</string>
+    <string name="filter_unchecked">Non cochés uniquement</string>
+    <string name="hide_search_bar"># Masquer la barre de recherche</string>
+    <string name="hide_filter_options"># Masquer les options de filtre</string>
+    <string name="check_all">Tout cocher</string>
+    <string name="uncheck_all">Tout décocher</string>
+    <string name="hide_check_all_buttons"># Masquer les boutons de cocher</string>
+    <string name="auto_apply_ringtone"># Appliquer automatiquement la sonnerie</string>
+    <string name="auto_apply_alarm"># Appliquer automatiquement l\'alarme</string>
+    <string name="auto_apply_notification"># Appliquer automatiquement la notification</string>
 </resources>
 

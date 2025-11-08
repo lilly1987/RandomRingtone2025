@@ -24,5 +24,37 @@
     <string name="delete_all_message">Alle items in het huidige tabblad verwijderen?</string>
     <string name="cancel_selection">Selectie annuleren</string>
     <string name="menu">Menu</string>
+    <string name="export">Exporteren</string>
+    <string name="export_success">Export voltooid</string>
+    <string name="export_error">Export mislukt</string>
+    <string name="import1">Importeren</string>
+    <string name="import_success">Import voltooid</string>
+    <string name="import_error">Import mislukt</string>
+    <string name="import_invalid_file">Ongeldig bestand</string>
+    <string name="search_hint">Zoeken...</string>
+    <string name="loading">Laden...</string>
+    <string name="loading_progress">Laden... %1$d/%2$d</string>
+    <string name="manual">Handleiding</string>
+    <string name="manual_title">Handleiding</string>
+    <string name="play">Afspelen</string>
+    <string name="pause">Pauzeren</string>
+    <string name="previous">Vorige</string>
+    <string name="next">Volgende</string>
+    <string name="load_playlist">Afspeellijst laden</string>
+    <string name="adding_items">Items toevoegen...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># Automatisch scrollen bij nummerwissel</string>
+    <string name="auto_play_next"># Automatisch volgende afspelen</string>
+    <string name="filter_all">Alles</string>
+    <string name="filter_checked">Alleen aangevinkt</string>
+    <string name="filter_unchecked">Alleen niet aangevinkt</string>
+    <string name="hide_search_bar"># Zoekbalk verbergen</string>
+    <string name="hide_filter_options"># Filteropties verbergen</string>
+    <string name="check_all">Alles aanvinken</string>
+    <string name="uncheck_all">Alles uitvinken</string>
+    <string name="hide_check_all_buttons"># Aanvinkknoppen verbergen</string>
+    <string name="auto_apply_ringtone"># Beltoon automatisch toepassen</string>
+    <string name="auto_apply_alarm"># Wekker automatisch toepassen</string>
+    <string name="auto_apply_notification"># Melding automatisch toepassen</string>
 </resources>
 

@@ -24,5 +24,37 @@
     <string name="delete_all_message">Eliminare tutti gli elementi nella scheda corrente?</string>
     <string name="cancel_selection">Annulla selezione</string>
     <string name="menu">Menu</string>
+    <string name="export">Esporta</string>
+    <string name="export_success">Esportazione completata</string>
+    <string name="export_error">Esportazione fallita</string>
+    <string name="import1">Importa</string>
+    <string name="import_success">Importazione completata</string>
+    <string name="import_error">Importazione fallita</string>
+    <string name="import_invalid_file">File non valido</string>
+    <string name="search_hint">Cerca...</string>
+    <string name="loading">Caricamento...</string>
+    <string name="loading_progress">Caricamento... %1$d/%2$d</string>
+    <string name="manual">Manuale</string>
+    <string name="manual_title">Manuale</string>
+    <string name="play">Riproduci</string>
+    <string name="pause">Pausa</string>
+    <string name="previous">Precedente</string>
+    <string name="next">Successivo</string>
+    <string name="load_playlist">Carica playlist</string>
+    <string name="adding_items">Aggiunta elementi...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># Scorrimento automatico al cambio traccia</string>
+    <string name="auto_play_next"># Riproduzione automatica successiva</string>
+    <string name="filter_all">Tutti</string>
+    <string name="filter_checked">Solo selezionati</string>
+    <string name="filter_unchecked">Solo non selezionati</string>
+    <string name="hide_search_bar"># Nascondi barra di ricerca</string>
+    <string name="hide_filter_options"># Nascondi opzioni filtro</string>
+    <string name="check_all">Seleziona tutti</string>
+    <string name="uncheck_all">Deseleziona tutti</string>
+    <string name="hide_check_all_buttons"># Nascondi pulsanti selezione</string>
+    <string name="auto_apply_ringtone"># Applica squillo automaticamente</string>
+    <string name="auto_apply_alarm"># Applica sveglia automaticamente</string>
+    <string name="auto_apply_notification"># Applica notifica automaticamente</string>
 </resources>
 

@@ -24,5 +24,37 @@
     <string name="delete_all_message">Alle Elemente im aktuellen Tab löschen?</string>
     <string name="cancel_selection">Auswahl abbrechen</string>
     <string name="menu">Menü</string>
+    <string name="export">Exportieren</string>
+    <string name="export_success">Export abgeschlossen</string>
+    <string name="export_error">Export fehlgeschlagen</string>
+    <string name="import1">Importieren</string>
+    <string name="import_success">Import abgeschlossen</string>
+    <string name="import_error">Import fehlgeschlagen</string>
+    <string name="import_invalid_file">Ungültige Datei</string>
+    <string name="search_hint">Suchen...</string>
+    <string name="loading">Lädt...</string>
+    <string name="loading_progress">Lädt... %1$d/%2$d</string>
+    <string name="manual">Handbuch</string>
+    <string name="manual_title">Handbuch</string>
+    <string name="play">Abspielen</string>
+    <string name="pause">Pause</string>
+    <string name="previous">Vorheriger</string>
+    <string name="next">Nächster</string>
+    <string name="load_playlist">Playlist laden</string>
+    <string name="adding_items">Elemente hinzufügen...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># Automatisches Scrollen bei Titelwechsel</string>
+    <string name="auto_play_next"># Automatisches Abspielen des nächsten</string>
+    <string name="filter_all">Alle</string>
+    <string name="filter_checked">Nur markierte</string>
+    <string name="filter_unchecked">Nur nicht markierte</string>
+    <string name="hide_search_bar"># Suchleiste ausblenden</string>
+    <string name="hide_filter_options"># Filteroptionen ausblenden</string>
+    <string name="check_all">Alle markieren</string>
+    <string name="uncheck_all">Alle Markierungen entfernen</string>
+    <string name="hide_check_all_buttons"># Markierungs-Schaltflächen ausblenden</string>
+    <string name="auto_apply_ringtone"># Klingelton automatisch anwenden</string>
+    <string name="auto_apply_alarm"># Wecker automatisch anwenden</string>
+    <string name="auto_apply_notification"># Benachrichtigung automatisch anwenden</string>
 </resources>
 

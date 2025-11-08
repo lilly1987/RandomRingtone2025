@@ -24,5 +24,37 @@
     <string name="delete_all_message">Удалить все элементы в текущей вкладке?</string>
     <string name="cancel_selection">Отменить выбор</string>
     <string name="menu">Меню</string>
+    <string name="export">Экспорт</string>
+    <string name="export_success">Экспорт завершен</string>
+    <string name="export_error">Экспорт не удался</string>
+    <string name="import1">Импорт</string>
+    <string name="import_success">Импорт завершен</string>
+    <string name="import_error">Импорт не удался</string>
+    <string name="import_invalid_file">Неверный файл</string>
+    <string name="search_hint">Поиск...</string>
+    <string name="loading">Загрузка...</string>
+    <string name="loading_progress">Загрузка... %1$d/%2$d</string>
+    <string name="manual">Руководство</string>
+    <string name="manual_title">Руководство</string>
+    <string name="play">Воспроизвести</string>
+    <string name="pause">Пауза</string>
+    <string name="previous">Предыдущий</string>
+    <string name="next">Следующий</string>
+    <string name="load_playlist">Загрузить плейлист</string>
+    <string name="adding_items">Добавление элементов...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># Автопрокрутка при смене трека</string>
+    <string name="auto_play_next"># Автовоспроизведение следующего</string>
+    <string name="filter_all">Все</string>
+    <string name="filter_checked">Только отмеченные</string>
+    <string name="filter_unchecked">Только неотмеченные</string>
+    <string name="hide_search_bar"># Скрыть панель поиска</string>
+    <string name="hide_filter_options"># Скрыть параметры фильтра</string>
+    <string name="check_all">Отметить все</string>
+    <string name="uncheck_all">Снять отметку со всех</string>
+    <string name="hide_check_all_buttons"># Скрыть кнопки отметки</string>
+    <string name="auto_apply_ringtone"># Автоприменение звонка</string>
+    <string name="auto_apply_alarm"># Автоприменение будильника</string>
+    <string name="auto_apply_notification"># Автоприменение уведомления</string>
 </resources>
 

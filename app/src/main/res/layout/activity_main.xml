@@ -25,9 +25,9 @@
             android:clickable="true"
             android:focusable="true"
             android:focusableInTouchMode="true"
-            android:padding="12dp"
+            android:padding="8dp"
             android:scaleType="centerInside"
-            android:stateListAnimator="@null"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

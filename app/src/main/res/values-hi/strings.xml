@@ -24,5 +24,37 @@
     <string name="delete_all_message">वर्तमान टैब के सभी आइटम हटाएं?</string>
     <string name="cancel_selection">चयन रद्द करें</string>
     <string name="menu">मेनू</string>
+    <string name="export">निर्यात</string>
+    <string name="export_success">निर्यात पूर्ण</string>
+    <string name="export_error">निर्यात विफल</string>
+    <string name="import1">आयात</string>
+    <string name="import_success">आयात पूर्ण</string>
+    <string name="import_error">आयात विफल</string>
+    <string name="import_invalid_file">अमान्य फ़ाइल</string>
+    <string name="search_hint">खोजें...</string>
+    <string name="loading">लोड हो रहा है...</string>
+    <string name="loading_progress">लोड हो रहा है... %1$d/%2$d</string>
+    <string name="manual">मैनुअल</string>
+    <string name="manual_title">मैनुअल</string>
+    <string name="play">चलाएं</string>
+    <string name="pause">रोकें</string>
+    <string name="previous">पिछला</string>
+    <string name="next">अगला</string>
+    <string name="load_playlist">प्लेलिस्ट लोड करें</string>
+    <string name="adding_items">आइटम जोड़े जा रहे हैं...</string>
+    <string name="adding_progress">%1$d/%2$d</string>
+    <string name="auto_scroll_on_track_change"># ट्रैक बदलने पर स्वचालित स्क्रॉल</string>
+    <string name="auto_play_next"># अगला स्वचालित रूप से चलाएं</string>
+    <string name="filter_all">सभी</string>
+    <string name="filter_checked">केवल चयनित</string>
+    <string name="filter_unchecked">केवल अचयनित</string>
+    <string name="hide_search_bar"># खोज बार छुपाएं</string>
+    <string name="hide_filter_options"># फ़िल्टर विकल्प छुपाएं</string>
+    <string name="check_all">सभी चुनें</string>
+    <string name="uncheck_all">सभी अचुनें</string>
+    <string name="hide_check_all_buttons"># चयन बटन छुपाएं</string>
+    <string name="auto_apply_ringtone"># रिंगटोन स्वचालित रूप से लागू करें</string>
+    <string name="auto_apply_alarm"># अलार्म स्वचालित रूप से लागू करें</string>
+    <string name="auto_apply_notification"># सूचना स्वचालित रूप से लागू करें</string>
 </resources>
 

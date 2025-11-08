@@ -98,6 +98,9 @@ class MainActivity : AppCompatActivity() {
     private var hideSearchBar = false
     private var hideFilterOptions = false
     private var hideCheckAllButtons = false
+    private var autoApplyRingtone = true
+    private var autoApplyAlarm = true
+    private var autoApplyNotification = true
     private var drawerAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>? = null
     private val longPressHandlers = mutableMapOf<Int, Runnable>()
     private var isRefreshingCounts = false
@@ -416,6 +419,10 @@ class MainActivity : AppCompatActivity() {
         autoPlayNext = preferences.getBoolean(KEY_AUTO_PLAY_NEXT, true)
         hideSearchBar = preferences.getBoolean(KEY_HIDE_SEARCH_BAR, false)
         hideFilterOptions = preferences.getBoolean(KEY_HIDE_FILTER_OPTIONS, false)
+        hideCheckAllButtons = preferences.getBoolean(KEY_HIDE_CHECK_ALL_BUTTONS, false)
+        autoApplyRingtone = preferences.getBoolean(KEY_AUTO_APPLY_RINGTONE, true)
+        autoApplyAlarm = preferences.getBoolean(KEY_AUTO_APPLY_ALARM, true)
+        autoApplyNotification = preferences.getBoolean(KEY_AUTO_APPLY_NOTIFICATION, true)
         
         // 시스템 수정 권한 체크
         checkWriteSettingsPermission()
@@ -561,6 +568,11 @@ class MainActivity : AppCompatActivity() {
         menuButton.isFocusable = true
         menuButton.elevation = 16f // 높은 elevation로 다른 요소 위에 표시
         
+        // 클릭 효과를 위한 foreground 설정 (코드에서 명시적으로 설정)
+        val typedValue = android.util.TypedValue()
+        theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, typedValue, true)
+        menuButton.foreground = getDrawable(typedValue.resourceId)
+        
         // 클릭 리스너를 먼저 설정 (최초 클릭 시에도 반응하도록)
         menuButton.setOnClickListener {
             try {
@@ -578,6 +590,9 @@ class MainActivity : AppCompatActivity() {
         menuButton.post {
             menuButton.bringToFront()
             mainLayout.bringChildToFront(menuButton)
+            // 클릭 효과가 제대로 작동하도록 다시 설정
+            menuButton.isClickable = true
+            menuButton.isEnabled = true
         }
         
         // 탭 레이아웃도 최상위로 이동
@@ -1475,6 +1490,9 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_HIDE_SEARCH_BAR = "hide_search_bar"
         private const val KEY_HIDE_FILTER_OPTIONS = "hide_filter_options"
         private const val KEY_HIDE_CHECK_ALL_BUTTONS = "hide_check_all_buttons"
+        private const val KEY_AUTO_APPLY_RINGTONE = "auto_apply_ringtone"
+        private const val KEY_AUTO_APPLY_ALARM = "auto_apply_alarm"
+        private const val KEY_AUTO_APPLY_NOTIFICATION = "auto_apply_notification"
     }
 
     private enum class FolderCategory {
@@ -2032,6 +2050,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateRandomRingtone() {
+        if (!autoApplyRingtone) return
         if (ringtoneSelected.isEmpty()) return
         val selectedUri = ringtoneSelected.randomOrNull() ?: return
         val audioUri = getRandomAudioFileFromUri(selectedUri) ?: return
@@ -2058,6 +2077,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkAndUpdateAlarmRingtone() {
+        if (!autoApplyAlarm) return
         if (alarmSelected.isEmpty()) return
         try {
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -2089,6 +2109,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkAndUpdateNotificationRingtone() {
+        if (!autoApplyNotification) return
         if (notificationSelected.isEmpty()) return
         try {
             val selectedUri = notificationSelected.randomOrNull() ?: return
@@ -2340,7 +2361,8 @@ class MainActivity : AppCompatActivity() {
         val options = arrayOf(
             getString(R.string.add_choice_folder),
             getString(R.string.add_choice_folder_all_files),
-            getString(R.string.add_choice_files)
+            getString(R.string.add_choice_files),
+            getString(R.string.load_playlist)
         )
         AlertDialog.Builder(this)
             .setTitle(R.string.add_choice_title)
@@ -2359,6 +2381,10 @@ class MainActivity : AppCompatActivity() {
                             android.util.Log.e("MainActivity", "Failed to launch file picker", e)
                             Toast.makeText(this, "파일 선택을 시작할 수 없습니다.", Toast.LENGTH_SHORT).show()
                         }
+                    }
+                    3 -> {
+                        // 재생목록 불러오기
+                        openPlaylistLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
                     }
                 }
             }
@@ -2463,13 +2489,15 @@ class MainActivity : AppCompatActivity() {
         val menuItems = listOf(
             getString(R.string.export),
             getString(R.string.import1),
-            getString(R.string.load_playlist),
             getString(R.string.manual),
             getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)",
             getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)",
             getString(R.string.hide_search_bar) + if (hideSearchBar) " (ON)" else " (OFF)",
             getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)",
-            getString(R.string.hide_check_all_buttons) + if (hideCheckAllButtons) " (ON)" else " (OFF)"
+            getString(R.string.hide_check_all_buttons) + if (hideCheckAllButtons) " (ON)" else " (OFF)",
+            getString(R.string.auto_apply_ringtone) + if (autoApplyRingtone) " (ON)" else " (OFF)",
+            getString(R.string.auto_apply_alarm) + if (autoApplyAlarm) " (ON)" else " (OFF)",
+            getString(R.string.auto_apply_notification) + if (autoApplyNotification) " (ON)" else " (OFF)"
         )
         val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -2482,13 +2510,15 @@ class MainActivity : AppCompatActivity() {
                 when (position) {
                     0 -> textView.text = getString(R.string.export)
                     1 -> textView.text = getString(R.string.import1)
-                    2 -> textView.text = getString(R.string.load_playlist)
-                    3 -> textView.text = getString(R.string.manual)
-                    4 -> textView.text = getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)"
-                    5 -> textView.text = getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)"
-                    6 -> textView.text = getString(R.string.hide_search_bar) + if (hideSearchBar) " (ON)" else " (OFF)"
-                    7 -> textView.text = getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)"
-                    8 -> textView.text = getString(R.string.hide_check_all_buttons) + if (hideCheckAllButtons) " (ON)" else " (OFF)"
+                    2 -> textView.text = getString(R.string.manual)
+                    3 -> textView.text = getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)"
+                    4 -> textView.text = getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)"
+                    5 -> textView.text = getString(R.string.hide_search_bar) + if (hideSearchBar) " (ON)" else " (OFF)"
+                    6 -> textView.text = getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)"
+                    7 -> textView.text = getString(R.string.hide_check_all_buttons) + if (hideCheckAllButtons) " (ON)" else " (OFF)"
+                    8 -> textView.text = getString(R.string.auto_apply_ringtone) + if (autoApplyRingtone) " (ON)" else " (OFF)"
+                    9 -> textView.text = getString(R.string.auto_apply_alarm) + if (autoApplyAlarm) " (ON)" else " (OFF)"
+                    10 -> textView.text = getString(R.string.auto_apply_notification) + if (autoApplyNotification) " (ON)" else " (OFF)"
                     else -> textView.text = menuItems[position]
                 }
                 holder.itemView.setOnClickListener {
@@ -2496,47 +2526,67 @@ class MainActivity : AppCompatActivity() {
                     when (position) {
                         0 -> createDocumentLauncher.launch("RandomRingtone_backup.json")
                         1 -> openDocumentLauncher.launch(arrayOf("application/json", "*/*"))
-                        2 -> openPlaylistLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                        3 -> {
+                        2 -> {
                             val intent = Intent(this@MainActivity, ManualActivity::class.java)
                             startActivity(intent)
                         }
-                        4 -> {
+                        3 -> {
                             // 곡 넘어갈때 자동 스크롤 토글
                             autoScrollOnTrackChange = !autoScrollOnTrackChange
                             preferences.edit().putBoolean(KEY_AUTO_SCROLL_ON_TRACK_CHANGE, autoScrollOnTrackChange).apply()
+                            drawerAdapter?.notifyItemChanged(3)
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
+                        }
+                        4 -> {
+                            // 곡 자동으로 넘기기 토글
+                            autoPlayNext = !autoPlayNext
+                            preferences.edit().putBoolean(KEY_AUTO_PLAY_NEXT, autoPlayNext).apply()
                             drawerAdapter?.notifyItemChanged(4)
                             shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                         5 -> {
-                            // 곡 자동으로 넘기기 토글
-                            autoPlayNext = !autoPlayNext
-                            preferences.edit().putBoolean(KEY_AUTO_PLAY_NEXT, autoPlayNext).apply()
-                            drawerAdapter?.notifyItemChanged(5)
-                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
-                        }
-                        6 -> {
                             // 하단 검색창 숨기기 토글
                             hideSearchBar = !hideSearchBar
                             preferences.edit().putBoolean(KEY_HIDE_SEARCH_BAR, hideSearchBar).apply()
+                            drawerAdapter?.notifyItemChanged(5)
+                            updateVisibilitySettings()
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
+                        }
+                        6 -> {
+                            // 상단 옵션창 숨기기 토글
+                            hideFilterOptions = !hideFilterOptions
+                            preferences.edit().putBoolean(KEY_HIDE_FILTER_OPTIONS, hideFilterOptions).apply()
                             drawerAdapter?.notifyItemChanged(6)
                             updateVisibilitySettings()
                             shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                         7 -> {
-                            // 상단 옵션창 숨기기 토글
-                            hideFilterOptions = !hideFilterOptions
-                            preferences.edit().putBoolean(KEY_HIDE_FILTER_OPTIONS, hideFilterOptions).apply()
+                            // 전체 체크/체크해제 버튼 숨기기 토글
+                            hideCheckAllButtons = !hideCheckAllButtons
+                            preferences.edit().putBoolean(KEY_HIDE_CHECK_ALL_BUTTONS, hideCheckAllButtons).apply()
                             drawerAdapter?.notifyItemChanged(7)
                             updateVisibilitySettings()
                             shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                         8 -> {
-                            // 전체 체크/체크해제 버튼 숨기기 토글
-                            hideCheckAllButtons = !hideCheckAllButtons
-                            preferences.edit().putBoolean(KEY_HIDE_CHECK_ALL_BUTTONS, hideCheckAllButtons).apply()
+                            // 벨소리 자동적용 토글
+                            autoApplyRingtone = !autoApplyRingtone
+                            preferences.edit().putBoolean(KEY_AUTO_APPLY_RINGTONE, autoApplyRingtone).apply()
                             drawerAdapter?.notifyItemChanged(8)
-                            updateVisibilitySettings()
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
+                        }
+                        9 -> {
+                            // 알람 자동적용 토글
+                            autoApplyAlarm = !autoApplyAlarm
+                            preferences.edit().putBoolean(KEY_AUTO_APPLY_ALARM, autoApplyAlarm).apply()
+                            drawerAdapter?.notifyItemChanged(9)
+                            shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
+                        }
+                        10 -> {
+                            // 알림 자동적용 토글
+                            autoApplyNotification = !autoApplyNotification
+                            preferences.edit().putBoolean(KEY_AUTO_APPLY_NOTIFICATION, autoApplyNotification).apply()
+                            drawerAdapter?.notifyItemChanged(10)
                             shouldCloseDrawer = false // ON/OFF 선택 시 메뉴 닫지 않음
                         }
                     }
