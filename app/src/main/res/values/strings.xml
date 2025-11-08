@@ -50,4 +50,7 @@
     <string name="filter_unchecked">체크안한것만</string>
     <string name="hide_search_bar"># 하단 검색창 숨기기</string>
     <string name="hide_filter_options"># 상단 옵션창 숨기기</string>
+    <string name="check_all">전체 체크</string>
+    <string name="uncheck_all">전체 체크해제</string>
+    <string name="hide_check_all_buttons"># 전체 체크/체크해제 버튼 숨기기</string>
 </resources>

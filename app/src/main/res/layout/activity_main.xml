@@ -25,6 +25,9 @@
             android:clickable="true"
             android:focusable="true"
             android:focusableInTouchMode="true"
+            android:padding="12dp"
+            android:scaleType="centerInside"
+            android:stateListAnimator="@null"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -99,6 +102,39 @@
 
         </RadioGroup>
 
+        <!-- 전체 체크/체크해제 버튼 -->
+        <LinearLayout
+            android:id="@+id/checkAllLayout"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:background="?attr/colorSurface"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/filterRadioGroup">
+
+            <Button
+                android:id="@+id/checkAllButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/check_all"
+                android:textColor="?attr/colorOnSurface"
+                android:background="?attr/colorSurface" />
+
+            <Button
+                android:id="@+id/uncheckAllButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/uncheck_all"
+                android:textColor="?attr/colorOnSurface"
+                android:background="?attr/colorSurface" />
+
+        </LinearLayout>
+
         <TextView
             android:id="@+id/emptyMessage"
             android:layout_width="wrap_content"
@@ -108,7 +144,7 @@
             app:layout_constraintBottom_toTopOf="@id/addFolderButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/filterRadioGroup" />
+            app:layout_constraintTop_toBottomOf="@id/checkAllLayout" />
 
         <TextView
             android:id="@+id/loadingMessage"

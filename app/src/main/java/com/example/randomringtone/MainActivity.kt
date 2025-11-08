@@ -97,6 +97,7 @@ class MainActivity : AppCompatActivity() {
     private var autoPlayNext = true
     private var hideSearchBar = false
     private var hideFilterOptions = false
+    private var hideCheckAllButtons = false
     private var drawerAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>? = null
     private val longPressHandlers = mutableMapOf<Int, Runnable>()
     private var isRefreshingCounts = false
@@ -446,6 +447,7 @@ class MainActivity : AppCompatActivity() {
 
         setupSearchFilter()
         setupFilterOptions()
+        setupCheckAllButtons()
         updateVisibilitySettings()
 
         val tabLayout = findViewById<TabLayout>(R.id.categoryTabs)
@@ -559,7 +561,20 @@ class MainActivity : AppCompatActivity() {
         menuButton.isFocusable = true
         menuButton.elevation = 16f // 높은 elevation로 다른 요소 위에 표시
         
-        // 레이아웃 완료 후 메뉴 버튼과 탭 레이아웃을 최상위로 이동
+        // 클릭 리스너를 먼저 설정 (최초 클릭 시에도 반응하도록)
+        menuButton.setOnClickListener {
+            try {
+                drawerLayout.openDrawer(androidx.core.view.GravityCompat.START)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to open drawer", e)
+            }
+        }
+        
+        // 메뉴 버튼을 즉시 최상위로 이동 (post 없이 즉시 실행)
+        menuButton.bringToFront()
+        mainLayout.bringChildToFront(menuButton)
+        
+        // 레이아웃 완료 후에도 다시 한 번 최상위로 이동 (확실하게)
         menuButton.post {
             menuButton.bringToFront()
             mainLayout.bringChildToFront(menuButton)
@@ -569,10 +584,6 @@ class MainActivity : AppCompatActivity() {
         tabLayout.post {
             tabLayout.bringToFront()
             mainLayout.bringChildToFront(tabLayout)
-        }
-        
-        menuButton.setOnClickListener {
-            drawerLayout.openDrawer(androidx.core.view.GravityCompat.START)
         }
         
         // DrawerLayout은 항상 열 수 있도록 설정 (로딩 중에도 사용 가능)
@@ -1051,12 +1062,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // 검색 쿼리 적용
+        // 검색 쿼리 적용 (와일드카드 지원)
         if (searchQuery.isEmpty()) {
             currentDisplayList.addAll(filteredList)
         } else {
             filteredList.forEach { name ->
-                if (name.lowercase().contains(searchQuery)) {
+                if (matchesWildcard(name.lowercase(), searchQuery)) {
                     currentDisplayList.add(name)
                 }
             }
@@ -1083,9 +1094,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    private fun setupCheckAllButtons() {
+        val checkAllButton = findViewById<android.widget.Button>(R.id.checkAllButton)
+        val uncheckAllButton = findViewById<android.widget.Button>(R.id.uncheckAllButton)
+        
+        checkAllButton.setOnClickListener {
+            checkAllVisibleItems(true)
+        }
+        
+        uncheckAllButton.setOnClickListener {
+            checkAllVisibleItems(false)
+        }
+    }
+    
+    private fun checkAllVisibleItems(check: Boolean) {
+        val currentDisplayList = getCurrentDisplayList()
+        val currentList = getCurrentFolderList()
+        val selectedSet = getCurrentPersistentSelected()
+        
+        var changed = false
+        for (displayName in currentDisplayList) {
+            val uri = currentList.find { getDisplayName(it) == displayName }
+            if (uri != null) {
+                if (check) {
+                    if (selectedSet.add(uri)) {
+                        changed = true
+                    }
+                } else {
+                    if (selectedSet.remove(uri)) {
+                        changed = true
+                    }
+                }
+            }
+        }
+        
+        if (changed) {
+            persistPersistentSelections()
+            folderAdapter.notifyDataSetChanged()
+            applySearchFilter()
+            uiHandler.postDelayed({
+                updateTabCounts()
+            }, 100)
+        }
+    }
+    
+    private fun matchesWildcard(text: String, pattern: String): Boolean {
+        // 와일드카드 패턴을 정규식으로 변환
+        // * -> .* (0개 이상의 문자)
+        // ? -> . (1개의 문자)
+        val regexPattern = pattern
+            .replace("*", ".*")
+            .replace("?", ".")
+        return try {
+            text.matches(Regex(regexPattern, RegexOption.IGNORE_CASE))
+        } catch (e: Exception) {
+            // 정규식 오류 시 기본 contains 검색으로 폴백
+            text.contains(pattern, ignoreCase = true)
+        }
+    }
+    
     private fun updateVisibilitySettings() {
         val filterRadioGroup = findViewById<android.widget.RadioGroup>(R.id.filterRadioGroup)
+        val checkAllLayout = findViewById<android.view.ViewGroup>(R.id.checkAllLayout)
         filterRadioGroup.visibility = if (hideFilterOptions) View.GONE else View.VISIBLE
+        checkAllLayout.visibility = if (hideCheckAllButtons || hideFilterOptions) View.GONE else View.VISIBLE
         searchEditText.visibility = if (hideSearchBar) View.GONE else View.VISIBLE
         
         // 레이아웃 제약 조건 업데이트
@@ -1093,7 +1165,11 @@ class MainActivity : AppCompatActivity() {
         constraintSet.clone(findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main))
         
         // ListView 상단 제약 조건 업데이트
-        val listViewTopConstraint = if (hideFilterOptions) R.id.categoryTabs else R.id.filterRadioGroup
+        val listViewTopConstraint = when {
+            hideFilterOptions -> R.id.categoryTabs
+            hideCheckAllButtons -> R.id.filterRadioGroup
+            else -> R.id.checkAllLayout
+        }
         constraintSet.connect(R.id.folderListView, androidx.constraintlayout.widget.ConstraintSet.TOP, listViewTopConstraint, androidx.constraintlayout.widget.ConstraintSet.BOTTOM)
         
         // ListView 하단 제약 조건 업데이트
@@ -1387,6 +1463,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_FILE_DURATIONS_CACHE = "file_durations_cache"
         private const val KEY_HIDE_SEARCH_BAR = "hide_search_bar"
         private const val KEY_HIDE_FILTER_OPTIONS = "hide_filter_options"
+        private const val KEY_HIDE_CHECK_ALL_BUTTONS = "hide_check_all_buttons"
     }
 
     private enum class FolderCategory {
@@ -2380,7 +2457,8 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.auto_scroll_on_track_change) + if (autoScrollOnTrackChange) " (ON)" else " (OFF)",
             getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)",
             getString(R.string.hide_search_bar) + if (hideSearchBar) " (ON)" else " (OFF)",
-            getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)"
+            getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)",
+            getString(R.string.hide_check_all_buttons) + if (hideCheckAllButtons) " (ON)" else " (OFF)"
         )
         val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -2399,6 +2477,7 @@ class MainActivity : AppCompatActivity() {
                     5 -> textView.text = getString(R.string.auto_play_next) + if (autoPlayNext) " (ON)" else " (OFF)"
                     6 -> textView.text = getString(R.string.hide_search_bar) + if (hideSearchBar) " (ON)" else " (OFF)"
                     7 -> textView.text = getString(R.string.hide_filter_options) + if (hideFilterOptions) " (ON)" else " (OFF)"
+                    8 -> textView.text = getString(R.string.hide_check_all_buttons) + if (hideCheckAllButtons) " (ON)" else " (OFF)"
                     else -> textView.text = menuItems[position]
                 }
                 holder.itemView.setOnClickListener {
@@ -2434,6 +2513,13 @@ class MainActivity : AppCompatActivity() {
                             hideFilterOptions = !hideFilterOptions
                             preferences.edit().putBoolean(KEY_HIDE_FILTER_OPTIONS, hideFilterOptions).apply()
                             drawerAdapter?.notifyItemChanged(7)
+                            updateVisibilitySettings()
+                        }
+                        8 -> {
+                            // 전체 체크/체크해제 버튼 숨기기 토글
+                            hideCheckAllButtons = !hideCheckAllButtons
+                            preferences.edit().putBoolean(KEY_HIDE_CHECK_ALL_BUTTONS, hideCheckAllButtons).apply()
+                            drawerAdapter?.notifyItemChanged(8)
                             updateVisibilitySettings()
                         }
                     }
