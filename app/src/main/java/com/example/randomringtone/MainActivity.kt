@@ -232,81 +232,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val openFilesLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        if (uris.isNullOrEmpty()) return@registerForActivityResult
-        
-        val totalCount = uris.size
-        var completedCount = 0
-        val urisToAdd = mutableListOf<Uri>()
-        
-        // 추가 중 표시 시작
-        loadingMessageView.text = getString(R.string.adding_items)
-        loadingMessageView.visibility = View.VISIBLE
-        folderListView.visibility = View.GONE
-        emptyMessageView.visibility = View.GONE
-        
-        // UI 스레드에서 현재 리스트 스냅샷 가져오기
-        val currentListSnapshot = getCurrentFolderList().toList()
-        
-        Thread {
-            try {
-                for (uri in uris) {
-                    try {
-                        // OpenMultipleDocuments는 일시적인 권한만 부여하므로 takePersistableUriPermission을 호출하면 안 됩니다.
-                        // 사용자가 선택한 파일은 이미 권한이 있으므로, URI를 바로 저장합니다.
-                        // 검증 없이 URI를 저장 (나중에 사용할 때 문제가 있으면 그때 처리)
-                        if (currentListSnapshot.none { it == uri }) {
-                            urisToAdd.add(uri)
-                        }
-                    } catch (e: Exception) {
-                        // 예상치 못한 오류 발생 시에도 계속 진행
-                        android.util.Log.e("MainActivity", "Unexpected error processing URI: $uri", e)
-                    }
-                    completedCount++
-                    // 진행 상황 업데이트
-                    runOnUiThread {
-                        try {
-                            loadingMessageView.text = getString(R.string.adding_items) + " " + 
-                                getString(R.string.adding_progress, completedCount, totalCount)
-                        } catch (e: Exception) {
-                            // 문자열 포맷 오류 시 기본 메시지 표시
-                            loadingMessageView.text = getString(R.string.adding_items)
-                        }
-                    }
-                }
-                
-                // UI 스레드에서 리스트에 추가 (동기화 문제 방지)
-                runOnUiThread {
-                    try {
-                        if (urisToAdd.isNotEmpty()) {
-                            val currentList = getCurrentFolderList()
-                            for (uri in urisToAdd) {
-                                if (currentList.none { it == uri }) {
-                                    currentList.add(uri)
-                                }
-                            }
-                            updateDisplayList()
-                            persistFolders()
-                        } else {
-                            // 추가할 항목이 없으면 추가 중 표시 제거
-                            updateListViewVisibility()
-                        }
-                    } catch (e: Exception) {
-                        android.util.Log.e("MainActivity", "Failed to finalize file addition", e)
-                        e.printStackTrace()
-                        updateListViewVisibility()
-                    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "Failed to process files", e)
-                e.printStackTrace()
-                runOnUiThread {
-                    updateListViewVisibility()
-                }
-            }
-        }.start()
-    }
-
     private val openFolderLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let {
             try {
@@ -336,6 +261,141 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     updateListViewVisibility()
                 }
+            }
+        }
+    }
+
+    private val getMultipleAudioFilesLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        try {
+            if (uris.isNullOrEmpty()) return@registerForActivityResult
+            
+            // 액티비티가 유효한지 확인
+            if (isFinishing || isDestroyed) return@registerForActivityResult
+            
+            // 뷰가 초기화되었는지 확인
+            if (!::loadingMessageView.isInitialized || !::folderListView.isInitialized || !::emptyMessageView.isInitialized) {
+                android.util.Log.e("MainActivity", "Views not initialized when external file selection callback received")
+                return@registerForActivityResult
+            }
+            
+            val totalCount = uris.size
+            var completedCount = 0
+            val urisToAdd = mutableListOf<Uri>()
+            
+            // 추가 중 표시 시작 (초기 메시지에 총 건수 표시)
+            try {
+                val initialProgressText = getString(R.string.adding_progress, 0, totalCount)
+                loadingMessageView.text = getString(R.string.adding_items) + " " + initialProgressText
+                loadingMessageView.visibility = View.VISIBLE
+                folderListView.visibility = View.GONE
+                emptyMessageView.visibility = View.GONE
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to update UI views", e)
+                // 뷰 업데이트 실패해도 계속 진행
+            }
+            
+            // UI 스레드에서 현재 리스트 스냅샷 가져오기
+            val currentListSnapshot = try {
+                getCurrentFolderList().toList()
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to get current folder list", e)
+                emptyList<Uri>()
+            }
+            
+            Thread {
+                try {
+                    for (uri in uris) {
+                        try {
+                            // 외부 탐색기 앱에서 선택한 파일은 이미 권한이 있으므로 URI를 바로 저장
+                            // 중복 체크
+                            if (currentListSnapshot.none { it == uri }) {
+                                urisToAdd.add(uri)
+                            }
+                        } catch (e: Exception) {
+                            // 예상치 못한 오류 발생 시에도 계속 진행
+                            android.util.Log.e("MainActivity", "Unexpected error processing URI: $uri", e)
+                        }
+                        completedCount++
+                        // 진행 상황 업데이트 (처리 중인 건수 표시)
+                        runOnUiThread {
+                            if (isFinishing || isDestroyed) return@runOnUiThread
+                            if (!::loadingMessageView.isInitialized) return@runOnUiThread
+                            try {
+                                val progressText = getString(R.string.adding_progress, completedCount, totalCount)
+                                loadingMessageView.text = getString(R.string.adding_items) + " " + progressText
+                            } catch (e: Exception) {
+                                // 문자열 포맷 오류 시 기본 메시지 표시
+                                try {
+                                    val progressText = getString(R.string.adding_progress, completedCount, totalCount)
+                                    loadingMessageView.text = getString(R.string.adding_items) + " " + progressText
+                                } catch (e2: Exception) {
+                                    try {
+                                        loadingMessageView.text = getString(R.string.adding_items)
+                                    } catch (e3: Exception) {
+                                        android.util.Log.e("MainActivity", "Failed to update loading message", e3)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // UI 스레드에서 리스트에 추가
+                    runOnUiThread {
+                        if (isFinishing || isDestroyed) return@runOnUiThread
+                        if (!::loadingMessageView.isInitialized || !::folderListView.isInitialized || !::emptyMessageView.isInitialized) {
+                            android.util.Log.e("MainActivity", "Views not initialized when finalizing file addition")
+                            return@runOnUiThread
+                        }
+                        try {
+                            if (urisToAdd.isNotEmpty()) {
+                                val currentList = getCurrentFolderList()
+                                for (uri in urisToAdd) {
+                                    if (currentList.none { it == uri }) {
+                                        currentList.add(uri)
+                                    }
+                                }
+                                updateDisplayList()
+                                persistFolders()
+                            } else {
+                                // 추가할 항목이 없으면 추가 중 표시 제거
+                                updateListViewVisibility()
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Failed to finalize file addition", e)
+                            e.printStackTrace()
+                            try {
+                                updateListViewVisibility()
+                            } catch (e2: Exception) {
+                                android.util.Log.e("MainActivity", "Failed to update list view visibility", e2)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Failed to process files", e)
+                    e.printStackTrace()
+                    runOnUiThread {
+                        if (isFinishing || isDestroyed) return@runOnUiThread
+                        if (!::loadingMessageView.isInitialized || !::folderListView.isInitialized || !::emptyMessageView.isInitialized) {
+                            return@runOnUiThread
+                        }
+                        try {
+                            updateListViewVisibility()
+                        } catch (e2: Exception) {
+                            android.util.Log.e("MainActivity", "Failed to update list view visibility in error handler", e2)
+                        }
+                    }
+                }
+            }.start()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Critical error in getMultipleAudioFilesLauncher callback", e)
+            e.printStackTrace()
+            // 최후의 안전장치: 뷰 상태 복구 시도
+            try {
+                if (!isFinishing && !isDestroyed && ::loadingMessageView.isInitialized && ::folderListView.isInitialized && ::emptyMessageView.isInitialized) {
+                    updateListViewVisibility()
+                }
+            } catch (e2: Exception) {
+                android.util.Log.e("MainActivity", "Failed to recover view state", e2)
             }
         }
     }
@@ -466,6 +526,12 @@ class MainActivity : AppCompatActivity() {
             }
             validateAndRemoveInvalidUrisAsync(notificationFolders)
         }.start()
+        
+        // 모든 폴더에 대해 지속 권한 요청 (백그라운드에서 처리)
+        // 폴더 로딩이 완료된 후 권한 요청을 시작하기 위해 약간 지연
+        uiHandler.postDelayed({
+            requestPersistableUriPermissionsForAllFolders()
+        }, 1000) // 1초 후 권한 요청 시작
 
         setupPhoneStateListener()
         requestNotificationListenerPermission()
@@ -1170,6 +1236,51 @@ class MainActivity : AppCompatActivity() {
             target.clear()
             preferences.edit().remove(key).apply()
         }
+    }
+    
+    private fun requestPersistableUriPermissionsForAllFolders() {
+        // 백그라운드에서 모든 폴더에 대해 권한 요청
+        Thread {
+            val allUris = mutableListOf<Uri>()
+            allUris.addAll(ringtoneFolders)
+            allUris.addAll(alarmFolders)
+            allUris.addAll(notificationFolders)
+            
+            for (uri in allUris) {
+                try {
+                    // 폴더인 경우 tree URI 권한 요청
+                    val asTree = DocumentFile.fromTreeUri(this, uri)
+                    if (asTree != null && asTree.isDirectory) {
+                        contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    } else {
+                        // 파일인 경우 single URI 권한 요청
+                        val asSingle = DocumentFile.fromSingleUri(this, uri)
+                        if (asSingle != null && asSingle.isFile) {
+                            // 파일의 경우 부모 폴더 권한이 필요할 수 있지만, 
+                            // OpenMultipleDocuments로 선택한 파일은 지속 권한을 얻을 수 없으므로 시도만 함
+                            try {
+                                contentResolver.takePersistableUriPermission(
+                                    uri,
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                )
+                            } catch (e: SecurityException) {
+                                // 파일은 지속 권한을 얻을 수 없을 수 있음 (정상)
+                                android.util.Log.d("MainActivity", "Cannot get persistable permission for file: $uri")
+                            }
+                        }
+                    }
+                } catch (e: SecurityException) {
+                    // 권한을 얻지 못한 경우 무시 (이미 권한이 있거나 권한을 얻을 수 없는 경우)
+                    android.util.Log.d("MainActivity", "Cannot get persistable permission for: $uri")
+                } catch (e: Exception) {
+                    // 기타 오류는 로그만 남기고 계속 진행
+                    android.util.Log.w("MainActivity", "Error requesting permission for: $uri", e)
+                }
+            }
+        }.start()
     }
     
     private fun prepareCategoryDisplayList(category: FolderCategory) {
@@ -2140,18 +2251,26 @@ class MainActivity : AppCompatActivity() {
     private fun showAddChoiceDialog() {
         val options = arrayOf(
             getString(R.string.add_choice_folder),
-            getString(R.string.add_choice_files),
-            getString(R.string.add_choice_folder_all_files)
+            getString(R.string.add_choice_folder_all_files),
+            getString(R.string.add_choice_files)
         )
         AlertDialog.Builder(this)
             .setTitle(R.string.add_choice_title)
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> startAddMultipleFoldersFlow()
-                    1 -> openFilesLauncher.launch(arrayOf("audio/*"))
-                    2 -> {
+                    1 -> {
                         pendingFolderCategory = currentCategory
                         openFolderAllFilesLauncher.launch(null)
+                    }
+                    2 -> {
+                        // 외부 탐색기 앱을 통한 음악 파일 선택
+                        try {
+                            getMultipleAudioFilesLauncher.launch("audio/*")
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Failed to launch file picker", e)
+                            Toast.makeText(this, "파일 선택을 시작할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
